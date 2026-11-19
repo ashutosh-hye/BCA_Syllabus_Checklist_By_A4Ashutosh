@@ -28,7 +28,7 @@ button { cursor: pointer; }
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-/* Header: Left Greeting + Right Account/DP */
+/* Header */
 .header-card {
   padding: 1.25rem;
   margin-bottom: 1.25rem;
@@ -103,6 +103,51 @@ button { cursor: pointer; }
 .subtitle {
   margin: 0.15rem 0 0;
   font-size: 0.82rem;
+  color: #64748b;
+}
+
+/* Year Selector Bar */
+.year-selector-wrap {
+  margin-top: 1.1rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid #f1f5f9;
+}
+.year-selector-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+.year-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.year-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.48rem 0.9rem;
+  border-radius: 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  transition: all 0.15s;
+}
+.year-pill:hover { background: #f8fafc; border-color: #94a3b8; }
+.year-pill.active {
+  background: #4f46e5;
+  color: #ffffff;
+  border-color: #4f46e5;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+}
+.year-note {
+  margin: 0.45rem 0 0;
+  font-size: 0.75rem;
   color: #64748b;
 }
 
@@ -210,8 +255,8 @@ button { cursor: pointer; }
 
 /* Overall Progress */
 .overall-section {
-  margin-top: 1.25rem;
-  padding-top: 1.25rem;
+  margin-top: 1.1rem;
+  padding-top: 1.1rem;
   border-top: 1px solid #f1f5f9;
 }
 .overall-meta {
@@ -391,6 +436,20 @@ button { cursor: pointer; }
   color: #4f46e5;
 }
 .link-btn:hover { color: #3730a3; }
+
+/* Semester 2 Coming Soon Banner */
+.sem-notice-banner {
+  margin-top: 1.25rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.85rem;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  color: #3730a3;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
 
 /* Subject View */
 .subject-header-card { padding: 1.25rem; margin-bottom: 1rem; }
@@ -597,7 +656,7 @@ button { cursor: pointer; }
   color: #64748b;
 }
 
-/* Modals & Toast */
+/* Modals & Admin Year Boxes */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -644,27 +703,39 @@ button { cursor: pointer; }
   color: #e11d48;
   font-weight: 500;
 }
-.admin-stats-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
+.admin-year-box {
   margin-top: 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.85rem;
+  overflow: hidden;
+  background: #ffffff;
 }
-.admin-stat-box {
+.admin-year-header {
+  width: 100%;
+  padding: 0.9rem 1rem;
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  text-align: left;
+  transition: background-color 0.15s;
 }
-.admin-stat-val { font-size: 1.25rem; font-weight: 700; color: #0f172a; }
-.admin-stat-lbl { font-size: 0.75rem; color: #64748b; }
+.admin-year-header:hover { background: #f1f5f9; }
+.admin-year-body {
+  padding: 0.75rem 1rem 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+.admin-year-body.hidden { display: none; }
 .admin-user-card {
   border: 1px solid #e2e8f0;
   border-radius: 0.75rem;
   padding: 0.85rem 1rem;
-  margin-top: 0.75rem;
+  margin-top: 0.65rem;
   background: #ffffff;
 }
+.admin-user-card:first-child { margin-top: 0; }
 .admin-user-top {
   display: flex;
   justify-content: space-between;
@@ -684,6 +755,47 @@ button { cursor: pointer; }
   background: #f1f5f9;
   color: #334155;
 }
+
+/* Year Picker Modal */
+.year-choice-btn {
+  width: 100%;
+  text-align: left;
+  padding: 0.9rem 1rem;
+  margin-top: 0.65rem;
+  border-radius: 0.75rem;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  transition: all 0.15s;
+}
+.year-choice-btn:hover {
+  border-color: #4f46e5;
+  background: #eef2ff;
+}
+
+/* Footer */
+.app-footer {
+  width: 100%;
+  margin-top: 2.5rem;
+  padding: 1.25rem 1rem 0.5rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+.app-footer strong { color: #0f172a; }
+.footer-dot { color: #cbd5e1; }
+.footer-link {
+  color: #4f46e5;
+  font-weight: 600;
+  text-decoration: none;
+}
+.footer-link:hover { text-decoration: underline; }
+
 .toast {
   position: fixed;
   bottom: 1.25rem;
@@ -700,30 +812,3 @@ button { cursor: pointer; }
 }
 .toast.show { display: block; }
 .hidden { display: none !important; }
-
-/* Footer */
-.app-footer {
-  margin-top: 2.25rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  font-size: 0.8rem;
-  color: #64748b;
-}
-.app-footer strong {
-  color: #0f172a;
-}
-.footer-dot {
-  color: #cbd5e1;
-}
-.footer-link {
-  color: #4f46e5;
-  font-weight: 600;
-  text-decoration: none;
-}
-.footer-link:hover {
-  text-decoration: underline;
-}

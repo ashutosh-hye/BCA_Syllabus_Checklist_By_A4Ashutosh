@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#4f46e5" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>BCA 3rd Semester — Syllabus Checklist</title>
+  <title>BCA Syllabus Checklist — RMLAU</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.js"></script>
@@ -14,11 +14,11 @@
 </head>
 <body>
   <div id="app" class="container">
-    <!-- Top Header: Left Greeting & Title | Right Google DP / Login & Actions -->
+    <!-- Top Header -->
     <header class="card header-card">
       <div class="header-top">
         <div class="header-left">
-          <span class="badge-sem">BCA 3rd Semester</span>
+          <span id="header-sem-badge" class="badge-sem">BCA 2nd Year • Semester III</span>
           <h1 class="title">Syllabus Progress Checklist</h1>
           <p id="greeting-text" class="greeting-text">Hello! Good Evening</p>
           <p class="subtitle">
@@ -48,6 +48,20 @@
 
           <button id="btn-reset-all" type="button" class="btn btn-danger-soft">Reset All Progress</button>
         </div>
+      </div>
+
+      <!-- BCA Year Selector -->
+      <div id="year-selector-wrap" class="year-selector-wrap">
+        <div class="year-selector-label">Select BCA Year</div>
+        <div class="year-bar">
+          <button type="button" data-select-year="year1" class="year-pill">
+            1st Year (Semester I)
+          </button>
+          <button type="button" data-select-year="year2" class="year-pill active">
+            2nd Year (Semester III)
+          </button>
+        </div>
+        <p class="year-note">More years and upcoming semesters will be added soon.</p>
       </div>
 
       <!-- Overall Stats -->
@@ -117,8 +131,30 @@
       </div>
       <div class="modal-actions" style="justify-content:flex-start;">
         <button id="btn-sync-now" type="button" class="btn btn-primary">Sync Now</button>
+        <button id="btn-change-year" type="button" class="btn btn-outline">Change Year</button>
         <button id="btn-sync-signout" type="button" class="btn btn-danger-soft">Log Out</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Year Picker Modal (After First Sign-In) -->
+  <div id="year-picker-modal" class="modal-backdrop">
+    <div class="modal-box">
+      <h2 class="modal-title">Select Your BCA Year</h2>
+      <p class="modal-desc">
+        Choose your current year to load your semester syllabus checklist.
+      </p>
+      <div style="margin-top:0.75rem;">
+        <button type="button" data-pick-year="year1" class="year-choice-btn">
+          <div style="font-weight:700;color:#0f172a;font-size:0.95rem;">BCA 1st Year</div>
+          <div style="font-size:0.78rem;color:#475569;margin-top:0.15rem;">Semester I Checklist (Live) • Semester II Coming Soon</div>
+        </button>
+        <button type="button" data-pick-year="year2" class="year-choice-btn">
+          <div style="font-weight:700;color:#0f172a;font-size:0.95rem;">BCA 2nd Year</div>
+          <div style="font-size:0.78rem;color:#475569;margin-top:0.15rem;">Semester III Checklist (Live)</div>
+        </button>
+      </div>
+      <p class="year-note" style="margin-top:0.75rem;">More years and semesters will be added soon.</p>
     </div>
   </div>
 
@@ -127,8 +163,8 @@
     <div class="modal-box modal-box-wide">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
         <div>
-          <h2 class="modal-title">Admin Dashboard — User Progress</h2>
-          <p class="modal-desc">Only visible to your admin account.</p>
+          <h2 class="modal-title">Admin Dashboard — Student Progress</h2>
+          <p class="modal-desc">Click a year box below to view students in that year.</p>
         </div>
         <div style="display:flex;gap:0.5rem;">
           <button id="btn-admin-refresh" type="button" class="btn btn-outline">Refresh</button>
@@ -136,18 +172,32 @@
         </div>
       </div>
 
-      <div class="admin-stats-row">
-        <div class="admin-stat-box">
-          <div id="admin-total-users" class="admin-stat-val">0</div>
-          <div class="admin-stat-lbl">Total Users</div>
-        </div>
-        <div class="admin-stat-box">
-          <div id="admin-avg-progress" class="admin-stat-val">0%</div>
-          <div class="admin-stat-lbl">Average Progress</div>
-        </div>
-      </div>
+      <div id="admin-year-containers" style="margin-top:0.75rem;"></div>
+    </div>
+  </div>
 
-      <div id="admin-users-list" style="margin-top:0.75rem;"></div>
+  <!-- Sign-In Prompt Modal -->
+  <div id="login-prompt-modal" class="modal-backdrop">
+    <div class="modal-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+        <h2 class="modal-title">Save Your Progress Everywhere</h2>
+        <button id="login-prompt-close" type="button" class="btn btn-muted" style="padding:0.25rem 0.6rem;font-size:0.78rem;">Close</button>
+      </div>
+      <p id="login-prompt-desc" class="modal-desc" style="line-height:1.55;">
+        Sign in with your Google account to save your progress and access it anywhere — on your laptop, mobile, or tablet. Without signing in, your ticks will reset when you close or reopen the site.
+      </p>
+      <div class="modal-actions" style="justify-content:flex-start;flex-wrap:wrap;">
+        <button id="btn-prompt-google-login" type="button" class="btn btn-google" style="padding:0.55rem 1rem;font-size:0.85rem;">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24Z"/>
+            <path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14Z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96Z"/>
+          </svg>
+          Sign in with Google
+        </button>
+        <button id="btn-prompt-later" type="button" class="btn btn-muted">Continue Browsing</button>
+      </div>
     </div>
   </div>
 

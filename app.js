@@ -8,7 +8,460 @@ const FIREBASE_CONFIG = {
   appId: "1:877614629020:web:caa36f9228c7d5539ead59"
 };
 
-const SYLLABUS_DATA = [
+const YEAR_1_SEM_1_SUBJECTS = [
+  {
+    id: 'y1s1_pst',
+    shortName: 'Problem Solving (C)',
+    name: '1. Problem Solving Techniques',
+    code: 'F0160701T',
+    category: 'CC 01 (Theory + Lab)',
+    units: [
+      {
+        id: 'y1s1_pst-u1',
+        title: 'Unit I — Problem Solving and Algorithmic Thinking',
+        groups: [
+          {
+            name: 'Problem Analysis & Algorithms',
+            topics: [
+              'Define and explain problems and problem instances',
+              'Differentiate between generalization and special cases',
+              'Classify different types of computational problems',
+              'Analyze problems for inputs, outputs, constraints, and solution approaches',
+              'Develop algorithms and analyze efficiency and correctness',
+              'Role of data structures in problem solving',
+              'Systematic problem-solving steps (understanding, planning, execution, review)',
+              'Breaking problems into sub-problems',
+              'Input/output specifications, validation rules, preconditions & postconditions'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'y1s1_pst-u2',
+        title: 'Unit II — Structured Programming & Algorithm Representation',
+        groups: [
+          {
+            name: 'Structured Programming Concepts',
+            topics: [
+              'Sequence, selection, and repetition concepts',
+              'Control structures: if, if-else, for, while, do-while',
+              'Nesting and stacking of control structures',
+              'Repetition mechanisms (entry/exit, counter, definite, indefinite, sentinel-controlled loops)'
+            ]
+          },
+          {
+            name: 'Algorithm Representation & Communication',
+            topics: [
+              'Construct pseudocode and flowcharts',
+              'Algorithm characteristics and formats',
+              'Data representation of integers and floating-point numbers in memory',
+              'Character encoding schemes: ASCII and Unicode',
+              'Implement structured programming concepts using C language'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'y1s1_pst-u3',
+        title: 'Unit III — C Language Fundamentals',
+        groups: [
+          {
+            name: 'C Basics & Constructs',
+            topics: [
+              'Evolution and generations of programming languages',
+              'Typed versus typeless languages',
+              'History and structure of a basic C program',
+              'C constructs for input, output, assignment, arithmetic, relational, and logical operations',
+              'Decision-making, looping statements, and selecting data types',
+              'Translation of algorithms and pseudocode into executable C programs'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'y1s1_pst-u4',
+        title: 'Unit IV — Problems on Numbers & Control Flow',
+        groups: [
+          {
+            name: 'Number Programs & C Statements',
+            topics: [
+              'Extracting digits of a number (Left to Right and Right to Left)',
+              'Palindrome number',
+              'Prime number and Prime factors',
+              'Amicable number, Perfect number, Armstrong number, Factorial',
+              'Converting number from one base to another',
+              'else-if ladder and switch-case',
+              'Increment/Decrement operators, break and continue statements'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'y1s1_pst-u5',
+        title: 'Unit V — Modular Programming, Arrays & Ethics',
+        groups: [
+          {
+            name: 'Functions, Arrays & Searching/Sorting',
+            topics: [
+              'Modular programming: Top-Down and Bottom-Up approaches',
+              'Recursion',
+              'Array operations: Reading, writing, max, min, sum, average, median, mode',
+              'Sequential and Binary Search',
+              'Sorting algorithm',
+              'Matrix operations',
+              'Function definition, declaration (prototype), and return statement',
+              '1D and 2D arrays, String functions',
+              'Other operators, Operator Precedence and Associativity'
+            ]
+          },
+          {
+            name: 'Professional & Ethical Issues',
+            topics: [
+              'Responsible use of algorithms and societal impact of software solutions'
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'y1s1_csa',
+    shortName: 'Computer Architecture',
+    name: '2. Computer System Architecture',
+    code: 'F0160702T',
+    category: 'CC 02',
+    units: [
+      {
+        id: 'y1s1_csa-u1',
+        title: 'Unit I — Basic Computer Organization',
+        groups: [
+          {
+            name: 'Architecture & CPU Basics',
+            topics: [
+              'Computer systems and evolution of computer architecture',
+              'Functional units, block diagram, and working of a digital computer',
+              'Structure of CPU, ALU, Control Unit, and registers',
+              'Register organization and instruction cycle',
+              'Fetch–decode–execute cycle',
+              'System bus organization (data bus, address bus, control bus)'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'y1s1_csa-u2',
+        title: 'Unit II — Data Representation & Computer Arithmetic',
+        groups: [
+          {
+            name: 'Number Systems & Digital Logic',
+            topics: [
+              'Number systems, complements, fixed and floating-point representation',
+              'Addition, subtraction, magnitude comparison, multiplication and division algorithms',
+              'Logic gates and Boolean algebra',
+              'Combinational circuits and circuit simplification',
+              'Flip-flops and sequential circuits',
+              'Decoders, multiplexers, registers, and counters'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'y1s1_csa-u3',
+        title: 'Unit III — Basic Computer Organization and Design',
+        groups: [
+          {
+            name: 'Registers, Instructions & Bus Design',
+            topics: [
+              'Computer registers and bus system',
+              'Instruction set, timing and control',
+              'Instruction cycle and memory reference',
+              'Input-output and interrupt',
+              'Interconnection structures and bus interconnection design'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'y1s1_csa-u4',
+        title: 'Unit IV — Central Processing Unit',
+        groups: [
+          {
+            name: 'CPU Design & Pipelining',
+            topics: [
+              'Register organization, arithmetic and logical micro-operations',
+              'Stack organization and micro-programmed control',
+              'Instruction formats, addressing modes, and instruction codes',
+              'Machine language, assembly language, and I/O programming',
+              'RISC and CISC architectures',
+              'Pipelining and parallel architecture'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'y1s1_csa-u5',
+        title: 'Unit V — Memory, I/O & Green Computing',
+        groups: [
+          {
+            name: 'Memory & I/O Organization',
+            topics: [
+              'Cache memory, Associative memory, and mapping',
+              'External devices and I/O modules',
+              'Programmed I/O, Interrupt-Driven I/O, Direct Memory Access (DMA), I/O Channels'
+            ]
+          },
+          {
+            name: 'Green Computing & Ethical Hardware',
+            topics: [
+              'Energy-efficient computer systems',
+              'Environmental impact of computer hardware and e-waste management'
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'y1s1_hist',
+    shortName: 'Ancient Indian Sci & Tech',
+    name: '3. History of Science and Technology in Ancient India',
+    code: 'F0160703T',
+    category: 'CC 02',
+    units: [
+      {
+        id: 'y1s1_hist-u1',
+        title: 'Unit I — Indus Civilization',
+        groups: [
+          {
+            name: 'Indus Valley Science & Planning',
+            topics: [
+              'Metallurgy',
+              'Mathematics and Astronomy',
+              'Town Planning',
+              'Flora and Fauna'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'y1s1_hist-u2',
+        title: 'Unit II — Astronomy in Ancient India',
+        groups: [
+          {
+            name: 'Historical Periods',
+            topics: ['Vedic Period', 'Vedanga', 'Classical Age']
+          }
+        ]
+      },
+      {
+        id: 'y1s1_hist-u3',
+        title: 'Unit III — Chemistry in Ancient India (upto NBPW Period)',
+        groups: [
+          {
+            name: 'Metallurgy & Materials',
+            topics: [
+              'Copper in Chalcolithic to pre-NBPW Period',
+              'Iron Technology from earliest time to NBPW Period',
+              'Glass Technology from earliest time to NBPW Period'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'y1s1_hist-u4',
+        title: 'Unit IV — Mathematics in Ancient India (up to Gupta Period)',
+        groups: [
+          {
+            name: 'Mathematical Developments',
+            topics: ['Bakhshali Mathematics', 'Geometry', 'Algebra', 'Arithmetic']
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'y1s1_math',
+    shortName: 'Foundation of Math',
+    name: '4. Foundation of Mathematics for Computer Applications',
+    code: 'F0160704T',
+    category: 'MDE 01',
+    units: [
+      {
+        id: 'y1s1_math-u1',
+        title: 'Unit I — Set Theory, Relations & Functions',
+        groups: [
+          {
+            name: 'Sets & Functions',
+            topics: [
+              'Basic concepts of set theory',
+              'Operations on sets: power set, Venn diagram, Cartesian product',
+              'Relations and functions',
+              'Types of functions and composition of functions'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'y1s1_math-u2',
+        title: 'Unit II — Mathematical Logic',
+        groups: [
+          {
+            name: 'Propositional & Predicate Logic',
+            topics: [
+              'Introduction, statements, connectives (negation, conjunction, disjunction)',
+              'Statement formulas and truth tables',
+              'Conditional and bi-conditional statements',
+              'Tautology, contradiction, equivalence of formulas, duality law',
+              'Predicates, Quantifiers, and Arguments'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'y1s1_math-u3',
+        title: 'Unit III — Matrix Algebra',
+        groups: [
+          {
+            name: 'Matrices & Linear Systems',
+            topics: [
+              'Types of matrices, matrix operations, transpose of a matrix',
+              "Determinant, inverse of a matrix, Cramer's rule",
+              'Rank of a matrix, normal form, echelon form',
+              'Cayley-Hamilton theorem',
+              'Eigen values and Eigen vectors'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'y1s1_math-u4',
+        title: 'Unit IV — Differential Calculus',
+        groups: [
+          {
+            name: 'Limits & Derivatives',
+            topics: [
+              'Functions and limits',
+              'Simple differentiation of algebraic functions',
+              'Evaluation of first and second order derivatives',
+              'Maxima and Minima'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'y1s1_math-u5',
+        title: 'Unit V — Integral Calculus',
+        groups: [
+          {
+            name: 'Integration Techniques',
+            topics: [
+              'Integral as limit of sum & Fundamental Theorem of Calculus',
+              'Indefinite integrals',
+              'Methods of integration: Substitution, By Parts, Partial Fractions',
+              'Reduction formulae for trigonometric functions',
+              'Gamma and Beta functions (definition)'
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'y1s1_ict',
+    shortName: 'ICT (SEC 01)',
+    name: '5. Information and Communication Technology',
+    code: 'SEC 01',
+    category: 'Skill Enhancement',
+    missingNotice: 'Official unit-wise syllabus for this subject has not been provided by the college yet. Topics will be updated once released.',
+    units: []
+  },
+  {
+    id: 'y1s1_firstaid',
+    shortName: 'First Aid & Health',
+    name: '6. First aid and Basic Health',
+    code: 'AEC 01',
+    category: 'Ability Enhancement',
+    missingNotice: 'Official unit-wise syllabus for this subject has not been provided by the college yet. Topics will be updated once released.',
+    units: []
+  }
+];
+
+// Saved in code for BCA 1st Year Semester II (will go live when Semester II begins)
+const YEAR_1_SEM_2_RESERVE = {
+  isLive: false,
+  subjects: [
+    {
+      id: 'y1s2_cpp',
+      shortName: 'OOP Using C++',
+      name: '1. Object Oriented Programming Using C++',
+      code: 'F0260701T',
+      category: 'CC I (Theory + Lab)',
+      units: [
+        {
+          id: 'y1s2_cpp-u1',
+          title: 'UNIT-I — Introduction & Basic Terms',
+          groups: [{ name: 'OOP Paradigms & C++ Basics', topics: ['Object-Oriented Approach vs Functional/Data decomposition', 'Abstraction, Encapsulation, Inheritance, Polymorphism', 'Review of C, Difference between C and C++ (cin, cout, new, delete, operators)'] }]
+        },
+        {
+          id: 'y1s2_cpp-u2',
+          title: 'UNIT-II — Classes and Objects',
+          groups: [{ name: 'Objects, Constructors & Memory', topics: ['Encapsulation, information hiding, abstract data types', 'Object & classes, attributes, methods, C++ class declaration', 'State, identity and behaviour of an object', 'Constructors, destructors, instantiation, default parameter value', 'C++ garbage collection, dynamic memory allocation, Metaclass/abstract classes'] }]
+        },
+        {
+          id: 'y1s2_cpp-u3',
+          title: 'UNIT-III — Inheritance and Polymorphism',
+          groups: [{ name: 'Inheritance & Overloading', topics: ['Inheritance, Class hierarchy, public/private/protected derivation', 'Aggregation, composition vs classification hierarchies', 'Polymorphism categorization, method polymorphism, polymorphism by parameter', 'Operator overloading, Parametric Polymorphism'] }]
+        },
+        {
+          id: 'y1s2_cpp-u4',
+          title: 'UNIT-IV — Generic Function',
+          groups: [{ name: 'Templates & Runtime Polymorphism', topics: ['Template function, function name overloading', 'Overriding inheritance methods', 'Run time polymorphism, Multiple Inheritance'] }]
+        },
+        {
+          id: 'y1s2_cpp-u5',
+          title: 'UNIT-V — Files and Exception Handling',
+          groups: [{ name: 'Streams, Namespaces & Exceptions', topics: ['Streams and files', 'Namespaces', 'Exception handling', 'Generic Classes'] }]
+        }
+      ]
+    },
+    {
+      id: 'y1s2_ds',
+      shortName: 'Data Structure',
+      name: '2. Concepts of Data Structure',
+      code: 'F0260702T',
+      category: 'CC II (Theory + Lab)',
+      units: [
+        {
+          id: 'y1s2_ds-u1',
+          title: 'UNIT-I — Introduction & Arrays',
+          groups: [{ name: 'Arrays & Matrices', topics: ['Introduction to Data Structure and its characteristics', 'Single and multidimensional arrays', 'Sparse arrays, lower/upper triangular and Tridiagonal matrices with Vector representation'] }]
+        },
+        {
+          id: 'y1s2_ds-u2',
+          title: 'UNIT-II — Stacks and Queues',
+          groups: [{ name: 'Stack & Queue Operations', topics: ['Primitive operations on stack and stack applications', 'Infix, postfix, prefix expressions, evaluation & conversion', 'Primitive operations on queues, D-queues, and priority queues'] }]
+        },
+        {
+          id: 'y1s2_ds-u3',
+          title: 'UNIT-III — Lists',
+          groups: [{ name: 'Linked Lists', topics: ['Introduction to linked lists (sequential and linked)', 'Traversal, insertion, deletion, searching', 'Two-way lists and use of headers'] }]
+        },
+        {
+          id: 'y1s2_ds-u4',
+          title: 'UNIT-IV — Trees',
+          groups: [{ name: 'Binary Trees & BST', topics: ['Introduction and terminology, traversal of binary trees', 'Recursive algorithms for traversal, insertion, deletion', 'Binary Search Tree'] }]
+        },
+        {
+          id: 'y1s2_ds-u5',
+          title: 'UNIT-V — B-Trees, Sorting & Searching',
+          groups: [{ name: 'Indexing, Sorting & Searching', topics: ['B-Trees: invention, indexing, creating a B-Tree', 'Sorting: Insertion, selection, merge, heap sort', 'Searching: linear search, binary search, hashing'] }]
+        }
+      ]
+    }
+  ]
+};
+
+const YEAR_2_SEM_3_SUBJECTS = [
   {
     id: 'java',
     shortName: 'JAVA & Web Design',
@@ -651,19 +1104,44 @@ const SYLLABUS_DATA = [
   }
 ];
 
-const STORAGE_KEY = 'bca_3rd_sem_checklist_v1';
+const SYLLABUS_BY_YEAR = {
+  year1: {
+    id: 'year1',
+    label: 'BCA 1st Year',
+    semLabel: 'BCA 1st Year • Semester I',
+    subjects: YEAR_1_SEM_1_SUBJECTS,
+    sem2ComingSoon: true
+  },
+  year2: {
+    id: 'year2',
+    label: 'BCA 2nd Year',
+    semLabel: 'BCA 2nd Year • Semester III',
+    subjects: YEAR_2_SEM_3_SUBJECTS,
+    sem2ComingSoon: false
+  }
+};
 
+const STORAGE_KEY = 'bca_3rd_sem_checklist_v1';
+const YEAR_STORAGE_KEY = 'bca_selected_year_v1';
+
+let selectedYear = 'year2';
 let checkedMap = {};
 let activeTab = 'overview';
 let filterMode = 'all';
 let searchQuery = '';
 let collapsedUnits = {};
 let pendingModalAction = null;
+let promptDismissedThisSession = false;
+let guestTickCount = 0;
 
 let fbAuth = null;
 let fbDb = null;
 let currentUser = null;
 let unsubscribeSnapshot = null;
+
+function getCurrentSubjects() {
+  return (SYLLABUS_BY_YEAR[selectedYear] || SYLLABUS_BY_YEAR.year2).subjects;
+}
 
 function isAdminUser(user) {
   return !!(
@@ -696,25 +1174,60 @@ function updateGreetingUI() {
   }
 }
 
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') {
-        checkedMap = parsed;
-      }
+function updateYearUI() {
+  const cfg = SYLLABUS_BY_YEAR[selectedYear] || SYLLABUS_BY_YEAR.year2;
+  const badge = document.getElementById('header-sem-badge');
+  if (badge) badge.textContent = cfg.semLabel;
+  const wrap = document.getElementById('year-selector-wrap');
+  if (wrap) {
+    if (currentUser && !isAdminUser(currentUser)) {
+      wrap.classList.add('hidden');
+    } else {
+      wrap.classList.remove('hidden');
     }
-  } catch (e) {
-    checkedMap = {};
+  }
+  document.querySelectorAll('[data-select-year]').forEach((btn) => {
+    if (btn.getAttribute('data-select-year') === selectedYear) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+}
+
+function setYear(yr, pushCloud) {
+  if (!SYLLABUS_BY_YEAR[yr]) return;
+  selectedYear = yr;
+  activeTab = 'overview';
+  filterMode = 'all';
+  searchQuery = '';
+  try {
+    localStorage.setItem(YEAR_STORAGE_KEY, yr);
+  } catch (e) {}
+  updateYearUI();
+  render();
+  if (pushCloud && currentUser && fbDb) {
+    pushToCloud();
   }
 }
 
+function loadState() {
+  checkedMap = {};
+  try {
+    const savedYr = localStorage.getItem(YEAR_STORAGE_KEY);
+    if (savedYr && SYLLABUS_BY_YEAR[savedYr]) {
+      selectedYear = savedYr;
+    }
+  } catch (e) {}
+}
+
 function saveState(skipCloud) {
+  if (!currentUser) return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(checkedMap));
+    localStorage.setItem(YEAR_STORAGE_KEY, selectedYear);
   } catch (e) {}
-  if (!skipCloud && currentUser && fbDb) {
+  if (!skipCloud && fbDb) {
     pushToCloud();
   }
 }
@@ -773,32 +1286,56 @@ function updateAuthUI() {
   }
 
   updateGreetingUI();
+  updateYearUI();
 }
 
-function buildSubjectBreakdown() {
+function getYearStats(yr) {
+  const subjects = (SYLLABUS_BY_YEAR[yr] || SYLLABUS_BY_YEAR.year2).subjects;
+  let total = 0;
+  let done = 0;
   const breakdown = {};
-  SYLLABUS_DATA.forEach((sub) => {
+  subjects.forEach((sub) => {
+    const s = getSubjectStats(sub);
+    total += s.total;
+    done += s.done;
     if (!sub.missingNotice) {
-      breakdown[sub.shortName] = getSubjectStats(sub).pct;
+      breakdown[sub.shortName] = s.pct;
     }
   });
-  return breakdown;
+  return {
+    total,
+    done,
+    left: total - done,
+    pct: total ? Math.round((done / total) * 100) : 0,
+    breakdown
+  };
 }
 
 function pushToCloud() {
   if (!currentUser || !fbDb) return;
-  const overall = getOverallStats();
+  const activeStats = getYearStats(selectedYear);
+  const y1Stats = getYearStats('year1');
+  const y2Stats = getYearStats('year2');
   const payload = {
     email: currentUser.email || '',
     displayName:
       currentUser.displayName ||
       (currentUser.email ? currentUser.email.split('@')[0] : 'Student'),
     photoURL: currentUser.photoURL || '',
+    selectedYear: selectedYear,
     checkedMap: checkedMap,
-    overallPct: overall.pct,
-    doneCount: overall.done,
-    totalCount: overall.total,
-    subjectStats: buildSubjectBreakdown(),
+    overallPct: activeStats.pct,
+    doneCount: activeStats.done,
+    totalCount: activeStats.total,
+    subjectStats: activeStats.breakdown,
+    year1Pct: y1Stats.pct,
+    year1Done: y1Stats.done,
+    year1Total: y1Stats.total,
+    year1Subjects: y1Stats.breakdown,
+    year2Pct: y2Stats.pct,
+    year2Done: y2Stats.done,
+    year2Total: y2Stats.total,
+    year2Subjects: y2Stats.breakdown,
     updatedAt: new Date().toISOString()
   };
   fbDb
@@ -817,11 +1354,31 @@ function startCloudListener(user) {
   const docRef = fbDb.collection('users').doc(user.uid);
   unsubscribeSnapshot = docRef.onSnapshot(
     (doc) => {
-      if (doc.exists && doc.data() && doc.data().checkedMap) {
-        checkedMap = doc.data().checkedMap;
-        saveState(true);
-        render();
+      if (doc.exists && doc.data()) {
+        const data = doc.data();
+        if (data.selectedYear && SYLLABUS_BY_YEAR[data.selectedYear]) {
+          selectedYear = data.selectedYear;
+          updateYearUI();
+        } else if (guestTickCount === 0) {
+          document.getElementById('year-picker-modal').classList.add('open');
+        }
+        if (data.checkedMap) {
+          if (guestTickCount > 0) {
+            checkedMap = { ...data.checkedMap, ...checkedMap };
+            guestTickCount = 0;
+            saveState(false);
+          } else {
+            checkedMap = data.checkedMap;
+            saveState(true);
+          }
+          render();
+        } else {
+          guestTickCount = 0;
+          pushToCloud();
+        }
       } else {
+        guestTickCount = 0;
+        document.getElementById('year-picker-modal').classList.add('open');
         pushToCloud();
       }
     },
@@ -853,74 +1410,101 @@ function initFirebase() {
   }
 }
 
+function renderAdminUserCard(u, yr) {
+  const name = escapeHtml(u.displayName || 'Student');
+  const email = escapeHtml(u.email || '');
+  const pct = yr === 'year1' ? (u.year1Pct ?? u.overallPct ?? 0) : (u.year2Pct ?? u.overallPct ?? 0);
+  const done = yr === 'year1' ? (u.year1Done ?? u.doneCount ?? 0) : (u.year2Done ?? u.doneCount ?? 0);
+  const total = yr === 'year1' ? (u.year1Total ?? u.totalCount ?? 0) : (u.year2Total ?? u.totalCount ?? 0);
+  const subjectsObj = yr === 'year1' ? (u.year1Subjects || u.subjectStats) : (u.year2Subjects || u.subjectStats);
+  const updated = u.updatedAt ? new Date(u.updatedAt).toLocaleString() : 'Never';
+  const initial = (u.displayName || u.email || 'S').trim().charAt(0).toUpperCase();
+  const avatarHtml = u.photoURL
+    ? `<img src="${escapeHtml(u.photoURL)}" class="avatar-img" alt="" />`
+    : `<span class="avatar-fallback">${escapeHtml(initial)}</span>`;
+  const pills = subjectsObj
+    ? Object.entries(subjectsObj)
+        .map(([sName, sPct]) => `<span class="admin-sub-pill">${escapeHtml(sName)}: <strong>${sPct}%</strong></span>`)
+        .join('')
+    : '';
+  return `
+    <div class="admin-user-card">
+      <div class="admin-user-top">
+        <div style="display:flex;align-items:center;gap:0.65rem;">
+          ${avatarHtml}
+          <div>
+            <div style="font-weight:700;font-size:0.92rem;color:#0f172a;">${name}</div>
+            <div style="font-size:0.75rem;color:#64748b;">${email} • Last active: ${escapeHtml(updated)}</div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-weight:700;font-size:1rem;color:#4f46e5;">${pct}%</div>
+          <div style="font-size:0.72rem;color:#64748b;">${done}/${total} topics</div>
+        </div>
+      </div>
+      <div class="progress-track progress-track-sm" style="margin-top:0.5rem;">
+        <div class="progress-fill" style="width:${pct}%"></div>
+      </div>
+      ${pills ? `<div class="admin-sub-pills">${pills}</div>` : ''}
+    </div>
+  `;
+}
+
 function loadAdminDashboard() {
-  const listEl = document.getElementById('admin-users-list');
+  const container = document.getElementById('admin-year-containers');
   if (!isAdminUser(currentUser) || !fbDb) {
-    listEl.innerHTML = '<p class="sync-error">Access denied.</p>';
+    container.innerHTML = '<p class="sync-error">Access denied.</p>';
     return;
   }
-  listEl.innerHTML = '<p class="unit-sub">Loading user progress...</p>';
+  container.innerHTML = '<p class="unit-sub">Loading student progress...</p>';
   fbDb
     .collection('users')
     .orderBy('updatedAt', 'desc')
     .get()
     .then((snap) => {
-      const users = [];
-      snap.forEach((doc) => users.push(doc.data()));
-      document.getElementById('admin-total-users').textContent = users.length;
-      const avg = users.length
-        ? Math.round(users.reduce((acc, u) => acc + (u.overallPct || 0), 0) / users.length)
+      const y1Users = [];
+      const y2Users = [];
+      snap.forEach((doc) => {
+        const d = doc.data();
+        if (d.selectedYear === 'year1') {
+          y1Users.push(d);
+        } else {
+          y2Users.push(d);
+        }
+      });
+
+      const y1Avg = y1Users.length
+        ? Math.round(y1Users.reduce((acc, u) => acc + (u.year1Pct ?? u.overallPct ?? 0), 0) / y1Users.length)
         : 0;
-      document.getElementById('admin-avg-progress').textContent = `${avg}%`;
+      const y2Avg = y2Users.length
+        ? Math.round(y2Users.reduce((acc, u) => acc + (u.year2Pct ?? u.overallPct ?? 0), 0) / y2Users.length)
+        : 0;
 
-      if (!users.length) {
-        listEl.innerHTML = '<p class="unit-sub">No users have signed in yet.</p>';
-        return;
-      }
-
-      listEl.innerHTML = users
-        .map((u) => {
-          const name = escapeHtml(u.displayName || 'Student');
-          const email = escapeHtml(u.email || '');
-          const pct = u.overallPct || 0;
-          const done = u.doneCount || 0;
-          const total = u.totalCount || 0;
-          const updated = u.updatedAt ? new Date(u.updatedAt).toLocaleString() : 'Never';
-          const initial = (u.displayName || u.email || 'S').trim().charAt(0).toUpperCase();
-          const avatarHtml = u.photoURL
-            ? `<img src="${escapeHtml(u.photoURL)}" class="avatar-img" alt="" />`
-            : `<span class="avatar-fallback">${escapeHtml(initial)}</span>`;
-          const pills = u.subjectStats
-            ? Object.entries(u.subjectStats)
-                .map(([sName, sPct]) => `<span class="admin-sub-pill">${escapeHtml(sName)}: <strong>${sPct}%</strong></span>`)
-                .join('')
-            : '';
-          return `
-            <div class="admin-user-card">
-              <div class="admin-user-top">
-                <div style="display:flex;align-items:center;gap:0.65rem;">
-                  ${avatarHtml}
-                  <div>
-                    <div style="font-weight:700;font-size:0.92rem;color:#0f172a;">${name}</div>
-                    <div style="font-size:0.75rem;color:#64748b;">${email} • Last active: ${escapeHtml(updated)}</div>
-                  </div>
-                </div>
-                <div style="text-align:right;">
-                  <div style="font-weight:700;font-size:1rem;color:#4f46e5;">${pct}%</div>
-                  <div style="font-size:0.72rem;color:#64748b;">${done}/${total} topics</div>
-                </div>
-              </div>
-              <div class="progress-track progress-track-sm" style="margin-top:0.5rem;">
-                <div class="progress-fill" style="width:${pct}%"></div>
-              </div>
-              ${pills ? `<div class="admin-sub-pills">${pills}</div>` : ''}
+      const buildYearBox = (yrKey, title, subtitle, list, avgPct) => `
+        <div class="admin-year-box">
+          <button type="button" data-admin-toggle="${yrKey}" class="admin-year-header">
+            <div>
+              <div style="font-weight:700;font-size:0.95rem;color:#0f172a;">${title}</div>
+              <div style="font-size:0.76rem;color:#64748b;">${subtitle} • <strong>${list.length}</strong> students • Avg: <strong>${avgPct}%</strong></div>
             </div>
-          `;
-        })
-        .join('');
+            <span style="font-size:0.78rem;font-weight:600;color:#4f46e5;">View Students ▾</span>
+          </button>
+          <div id="admin-box-${yrKey}" class="admin-year-body hidden">
+            ${
+              list.length
+                ? list.map((u) => renderAdminUserCard(u, yrKey)).join('')
+                : '<p class="unit-sub">No students have signed in for this year yet.</p>'
+            }
+          </div>
+        </div>
+      `;
+
+      container.innerHTML =
+        buildYearBox('year1', 'BCA 1st Year', 'Semester I', y1Users, y1Avg) +
+        buildYearBox('year2', 'BCA 2nd Year', 'Semester III', y2Users, y2Avg);
     })
     .catch((err) => {
-      listEl.innerHTML = `<p class="sync-error">Could not load users: ${escapeHtml(err.message || 'Permission error')}</p>`;
+      container.innerHTML = `<p class="sync-error">Could not load users: ${escapeHtml(err.message || 'Permission error')}</p>`;
     });
 }
 
@@ -952,9 +1536,10 @@ function getSubjectStats(subject) {
 }
 
 function getOverallStats() {
+  const subjects = getCurrentSubjects();
   let total = 0;
   let done = 0;
-  SYLLABUS_DATA.forEach((sub) => {
+  subjects.forEach((sub) => {
     const s = getSubjectStats(sub);
     total += s.total;
     done += s.done;
@@ -977,6 +1562,34 @@ function openModal(title, desc, onConfirm) {
   document.getElementById('modal-desc').textContent = desc;
   pendingModalAction = onConfirm;
   document.getElementById('confirm-modal').classList.add('open');
+}
+
+function triggerGoogleSignIn() {
+  if (!fbAuth || typeof firebase === 'undefined') {
+    showToast('Sign-in requires internet connection');
+    return;
+  }
+  const provider = new firebase.auth.GoogleAuthProvider();
+  fbAuth
+    .signInWithPopup(provider)
+    .then(() => {
+      document.getElementById('login-prompt-modal').classList.remove('open');
+      showToast('Signed in with Google!');
+    })
+    .catch((err) => {
+      if (err && (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment')) {
+        fbAuth.signInWithRedirect(provider).catch(() => showToast('Could not start Google Sign-In'));
+      } else {
+        showToast(err.message || 'Google Sign-In failed');
+      }
+    });
+}
+
+function openLoginPromptModal() {
+  const descEl = document.getElementById('login-prompt-desc');
+  descEl.textContent =
+    'Sign in with your Google account to save your progress and access it anywhere — on your laptop, mobile, or tablet. Without signing in, your ticks will reset when you close or reopen the site.';
+  document.getElementById('login-prompt-modal').classList.add('open');
 }
 
 function closeModal() {
@@ -1004,6 +1617,7 @@ function renderOverall() {
 
 function renderTabs() {
   const container = document.getElementById('subject-tabs');
+  const subjects = getCurrentSubjects();
   let html = `
     <button type="button" data-tab="overview"
       class="tab-btn ${activeTab === 'overview' ? 'active-overview' : ''}">
@@ -1011,7 +1625,7 @@ function renderTabs() {
     </button>
   `;
 
-  SYLLABUS_DATA.forEach((sub) => {
+  subjects.forEach((sub) => {
     const s = getSubjectStats(sub);
     const isActive = activeTab === sub.id;
     const badge = sub.missingNotice ? 'N/A' : `${s.pct}%`;
@@ -1028,8 +1642,10 @@ function renderTabs() {
 }
 
 function renderOverview() {
+  const subjects = getCurrentSubjects();
+  const cfg = SYLLABUS_BY_YEAR[selectedYear] || SYLLABUS_BY_YEAR.year2;
   let cards = '';
-  SYLLABUS_DATA.forEach((sub) => {
+  subjects.forEach((sub) => {
     const s = getSubjectStats(sub);
     const unitCount = sub.units.filter((u) => !u.missingNotice).length;
     cards += `
@@ -1064,7 +1680,15 @@ function renderOverview() {
     `;
   });
 
-  return `<div class="overview-grid">${cards}</div>`;
+  const sem2Banner = cfg.sem2ComingSoon
+    ? `
+      <div class="sem-notice-banner">
+        <span><strong>Semester II:</strong> 2nd Semester syllabus will go live once the semester begins in college.</span>
+      </div>
+    `
+    : '';
+
+  return `<div class="overview-grid">${cards}</div>${sem2Banner}`;
 }
 
 function renderSubjectView(sub) {
@@ -1235,10 +1859,11 @@ function render() {
   renderOverall();
   renderTabs();
   const main = document.getElementById('main-content');
+  const subjects = getCurrentSubjects();
   if (activeTab === 'overview') {
     main.innerHTML = renderOverview();
   } else {
-    const sub = SYLLABUS_DATA.find((s) => s.id === activeTab);
+    const sub = subjects.find((s) => s.id === activeTab);
     main.innerHTML = sub ? renderSubjectView(sub) : renderOverview();
   }
 
@@ -1257,7 +1882,23 @@ function render() {
   }
 }
 
-// Event Delegation
+// Year Selector Events
+document.querySelectorAll('[data-select-year]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    setYear(btn.getAttribute('data-select-year'), true);
+  });
+});
+
+document.querySelectorAll('[data-pick-year]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const yr = btn.getAttribute('data-pick-year');
+    document.getElementById('year-picker-modal').classList.remove('open');
+    setYear(yr, true);
+    showToast(`${SYLLABUS_BY_YEAR[yr].label} selected!`);
+  });
+});
+
+// Tab & Content Events
 document.getElementById('subject-tabs').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-tab]');
   if (!btn) return;
@@ -1297,7 +1938,7 @@ document.getElementById('main-content').addEventListener('click', (e) => {
   if (markUnit) {
     const uid = markUnit.getAttribute('data-mark-unit');
     const val = markUnit.getAttribute('data-mark-val') === '1';
-    const sub = SYLLABUS_DATA.find((s) => s.id === activeTab);
+    const sub = getCurrentSubjects().find((s) => s.id === activeTab);
     const unit = sub && sub.units.find((u) => u.id === uid);
     if (unit) {
       unit.groups.forEach((g, gi) => {
@@ -1310,6 +1951,10 @@ document.getElementById('main-content').addEventListener('click', (e) => {
       saveState();
       render();
       showToast(val ? `${unit.title} marked complete` : `${unit.title} unchecked`);
+      if (!currentUser && val && !promptDismissedThisSession) {
+        guestTickCount += 3;
+        openLoginPromptModal();
+      }
     }
     return;
   }
@@ -1317,7 +1962,7 @@ document.getElementById('main-content').addEventListener('click', (e) => {
   const resetSub = e.target.closest('[data-reset-subject]');
   if (resetSub) {
     const sid = resetSub.getAttribute('data-reset-subject');
-    const sub = SYLLABUS_DATA.find((s) => s.id === sid);
+    const sub = getCurrentSubjects().find((s) => s.id === sid);
     if (!sub) return;
     openModal(
       `Reset ${sub.shortName}?`,
@@ -1339,7 +1984,7 @@ document.getElementById('main-content').addEventListener('click', (e) => {
   }
 
   if (e.target.closest('#btn-toggle-collapse')) {
-    const sub = SYLLABUS_DATA.find((s) => s.id === activeTab);
+    const sub = getCurrentSubjects().find((s) => s.id === activeTab);
     if (sub) {
       const allCollapsed = sub.units.every((u) => collapsedUnits[u.id]);
       sub.units.forEach((u) => {
@@ -1354,21 +1999,39 @@ document.getElementById('main-content').addEventListener('change', (e) => {
   const cb = e.target.closest('input[type="checkbox"][data-topic-id]');
   if (!cb) return;
   const tid = cb.getAttribute('data-topic-id');
-  if (cb.checked) checkedMap[tid] = true;
-  else delete checkedMap[tid];
+  if (cb.checked) {
+    checkedMap[tid] = true;
+    if (!currentUser) {
+      guestTickCount++;
+      if (guestTickCount >= 3 && !promptDismissedThisSession) {
+        openLoginPromptModal();
+      }
+    }
+  } else {
+    delete checkedMap[tid];
+  }
   saveState();
   render();
 });
 
 document.getElementById('btn-reset-all').addEventListener('click', () => {
+  const cfg = SYLLABUS_BY_YEAR[selectedYear] || SYLLABUS_BY_YEAR.year2;
   openModal(
-    'Reset All Progress?',
-    'This will uncheck every topic across all BCA 3rd Semester subjects.',
+    `Reset ${cfg.label} Progress?`,
+    `This will uncheck every topic in ${cfg.semLabel}.`,
     () => {
-      checkedMap = {};
+      cfg.subjects.forEach((sub) => {
+        sub.units.forEach((u) => {
+          u.groups.forEach((g, gi) => {
+            g.topics.forEach((_, ti) => {
+              delete checkedMap[getTopicId(u.id, gi, ti)];
+            });
+          });
+        });
+      });
       saveState();
       render();
-      showToast('All syllabus progress reset');
+      showToast(`${cfg.label} progress reset`);
     }
   );
 });
@@ -1384,23 +2047,18 @@ document.getElementById('confirm-modal').addEventListener('click', (e) => {
   if (e.target.id === 'confirm-modal') closeModal();
 });
 
-// Google Sign-In & Account Modal Events
-document.getElementById('btn-google-login').addEventListener('click', () => {
-  if (!fbAuth || typeof firebase === 'undefined') {
-    showToast('Sign-in requires internet connection');
-    return;
-  }
-  const provider = new firebase.auth.GoogleAuthProvider();
-  fbAuth
-    .signInWithPopup(provider)
-    .then(() => showToast('Signed in with Google!'))
-    .catch((err) => {
-      if (err && (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment')) {
-        fbAuth.signInWithRedirect(provider).catch(() => showToast('Could not start Google Sign-In'));
-      } else {
-        showToast(err.message || 'Google Sign-In failed');
-      }
-    });
+// Google Sign-In & Prompt Modal Events
+document.getElementById('btn-google-login').addEventListener('click', triggerGoogleSignIn);
+document.getElementById('btn-prompt-google-login').addEventListener('click', triggerGoogleSignIn);
+
+function closeLoginPrompt() {
+  promptDismissedThisSession = true;
+  document.getElementById('login-prompt-modal').classList.remove('open');
+}
+document.getElementById('btn-prompt-later').addEventListener('click', closeLoginPrompt);
+document.getElementById('login-prompt-close').addEventListener('click', closeLoginPrompt);
+document.getElementById('login-prompt-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'login-prompt-modal') closeLoginPrompt();
 });
 
 document.getElementById('btn-user-pill').addEventListener('click', () => {
@@ -1415,6 +2073,11 @@ document.getElementById('account-modal').addEventListener('click', (e) => {
   if (e.target.id === 'account-modal') {
     document.getElementById('account-modal').classList.remove('open');
   }
+});
+
+document.getElementById('btn-change-year').addEventListener('click', () => {
+  document.getElementById('account-modal').classList.remove('open');
+  document.getElementById('year-picker-modal').classList.add('open');
 });
 
 document.getElementById('btn-sync-now').addEventListener('click', () => {
@@ -1451,7 +2114,25 @@ document.getElementById('admin-modal').addEventListener('click', (e) => {
   }
 });
 
+document.getElementById('admin-year-containers').addEventListener('click', (e) => {
+  const toggleBtn = e.target.closest('[data-admin-toggle]');
+  if (!toggleBtn) return;
+  const yrKey = toggleBtn.getAttribute('data-admin-toggle');
+  const body = document.getElementById(`admin-box-${yrKey}`);
+  if (body) {
+    body.classList.toggle('hidden');
+  }
+});
+
+// Show gentle sign-in prompt 10 seconds after opening if not signed in
+setTimeout(() => {
+  if (!currentUser && !promptDismissedThisSession) {
+    openLoginPromptModal();
+  }
+}, 10000);
+
 loadState();
+updateYearUI();
 updateGreetingUI();
 initFirebase();
 render();
