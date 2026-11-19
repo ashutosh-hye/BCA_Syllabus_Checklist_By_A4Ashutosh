@@ -1,4 +1,4 @@
-const ADMIN_EMAIL = 'ashutoshaamonty@gmail.com';
+const ADMIN_EMAILS = ['ashutoshaamonty@gmail.com', 'tideseren@gmail.com'];
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCjK6hvr-faQTcV5mRA1QTkZw8LoZyO2bU",
   authDomain: "project-b2096ed9-f6e9-4bfc-9ef.firebaseapp.com",
@@ -1147,8 +1147,7 @@ function isAdminUser(user) {
   return !!(
     user &&
     user.email &&
-    ADMIN_EMAIL &&
-    user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+    ADMIN_EMAILS.some((e) => e.toLowerCase() === user.email.toLowerCase())
   );
 }
 
