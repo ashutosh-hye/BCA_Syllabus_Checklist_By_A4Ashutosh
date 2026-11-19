@@ -812,3 +812,142 @@ button { cursor: pointer; }
 }
 .toast.show { display: block; }
 .hidden { display: none !important; }
+
+/* Dark Mode */
+body.dark {
+  background-color: #0b1120;
+  color: #f1f5f9;
+}
+body.dark .card,
+body.dark .modal-box,
+body.dark .admin-year-box,
+body.dark .admin-user-card {
+  background-color: #111827;
+  border-color: #1e293b;
+  color: #f1f5f9;
+}
+body.dark .title,
+body.dark .sub-title,
+body.dark .subject-h2,
+body.dark .unit-title,
+body.dark .modal-title,
+body.dark .overall-counts strong,
+body.dark .app-footer strong {
+  color: #f8fafc;
+}
+body.dark .subtitle,
+body.dark .sub-meta,
+body.dark .unit-sub,
+body.dark .modal-desc,
+body.dark .overall-label,
+body.dark .overall-counts,
+body.dark .year-selector-label,
+body.dark .year-note,
+body.dark .group-title,
+body.dark .app-footer {
+  color: #94a3b8;
+}
+body.dark .greeting-text,
+body.dark .overall-pct,
+body.dark .sub-pct,
+body.dark .link-btn,
+body.dark .footer-link {
+  color: #818cf8;
+}
+body.dark .overall-section,
+body.dark .year-selector-wrap,
+body.dark .controls-bar,
+body.dark .sub-card-footer,
+body.dark .app-footer {
+  border-color: #1e293b;
+}
+body.dark .progress-track,
+body.dark .unit-mini-bar {
+  background-color: #1e293b;
+}
+body.dark .unit-header,
+body.dark .admin-year-header,
+body.dark .sync-info-box,
+body.dark .year-choice-btn {
+  background-color: #0f172a;
+  border-color: #1e293b;
+  color: #e2e8f0;
+}
+body.dark .admin-year-body {
+  border-color: #1e293b;
+}
+body.dark .topic-row {
+  border-bottom-color: #1e293b;
+}
+body.dark .topic-row:hover {
+  background-color: #1e293b;
+}
+body.dark .topic-row span {
+  color: #e2e8f0;
+}
+body.dark .topic-row input[type="checkbox"]:checked + span {
+  color: #64748b;
+}
+body.dark .btn-outline,
+body.dark .btn-google,
+body.dark .user-pill,
+body.dark .tab-btn,
+body.dark .year-pill,
+body.dark .filter-btn,
+body.dark .btn-unit-done,
+body.dark .search-input {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+body.dark .btn-outline:hover,
+body.dark .btn-google:hover,
+body.dark .user-pill:hover,
+body.dark .tab-btn:hover,
+body.dark .year-pill:hover {
+  background-color: #334155;
+}
+body.dark .tab-btn.active-overview,
+body.dark .filter-btn.active {
+  background-color: #4f46e5;
+  border-color: #4f46e5;
+  color: #ffffff;
+}
+body.dark .tab-btn.active-subject,
+body.dark .year-pill.active {
+  background-color: #4f46e5;
+  border-color: #4f46e5;
+  color: #ffffff;
+}
+body.dark .tab-badge,
+body.dark .pill-code,
+body.dark .admin-sub-pill {
+  background-color: #1e293b;
+  color: #cbd5e1;
+}
+body.dark .pill-cat,
+body.dark .badge-sem {
+  background-color: #1e1b4b;
+  color: #a5b4fc;
+  border-color: #312e81;
+}
+body.dark .sem-notice-banner {
+  background-color: #1e1b4b;
+  border-color: #312e81;
+  color: #c7d2fe;
+}
+body.dark .warn-box,
+body.dark .pill-warn {
+  background-color: #451a03;
+  border-color: #78350f;
+  color: #fde68a;
+}
+body.dark .btn-muted {
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
+body.dark .btn-danger-soft {
+  background-color: #4c0519;
+  border-color: #881337;
+  color: #fda4af;
+}

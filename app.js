@@ -2130,6 +2130,38 @@ setTimeout(() => {
   }
 }, 10000);
 
+
+const THEME_STORAGE_KEY = 'bca_theme_v1';
+
+function applyTheme(theme) {
+  const isDark = theme === 'dark';
+  document.body.classList.toggle('dark', isDark);
+  const btn = document.getElementById('btn-theme-toggle');
+  if (btn) {
+    btn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+  }
+}
+
+function initTheme() {
+  let theme = 'light';
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved === 'dark' || saved === 'light') {
+      theme = saved;
+    }
+  } catch (e) {}
+  applyTheme(theme);
+}
+
+document.getElementById('btn-theme-toggle').addEventListener('click', () => {
+  const next = document.body.classList.contains('dark') ? 'light' : 'dark';
+  applyTheme(next);
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, next);
+  } catch (e) {}
+});
+
+initTheme();
 loadState();
 updateYearUI();
 updateGreetingUI();
