@@ -1340,7 +1340,7 @@ function pushToCloud() {
   fbDb
     .collection('users')
     .doc(currentUser.uid)
-    .set(payload, { merge: true })
+    .set(payload)
     .catch(() => {});
 }
 
