@@ -480,7 +480,7 @@ const SYLLABUS_DATA = [
     name: '5. Web Designing',
     code: '1180101T',
     category: 'Vocational',
-    missingNotice: 'Source PDF mein is subject ke sirf heading aur course code diye gaye hain — Units aur subtopics ka page PDF mein missing hai.',
+    missingNotice: 'Official syllabus has not been provided by the college yet. Topics will be updated once released.',
     units: []
   },
   {
@@ -524,7 +524,7 @@ const SYLLABUS_DATA = [
       {
         id: 'hv-u2',
         title: 'UNIT-II',
-        missingNotice: 'Source PDF mein UNIT-I ke baad directly UNIT-III diya gaya hai — UNIT-II ka portion PDF mein missing hai.',
+        missingNotice: 'Unit-II details have not been provided in the official syllabus yet.',
         groups: []
       },
       {
@@ -630,10 +630,10 @@ const SYLLABUS_DATA = [
       },
       {
         id: 'hv-u6',
-        title: 'UNIT-VI / आगे का portion shown as Unit-V',
+        title: 'UNIT-VI',
         groups: [
           {
-            name: 'Environmental Laws?',
+            name: 'Environmental Laws',
             topics: [
               'International Advancements in Environmental Conservation',
               'Role of National Green Tribunal',
@@ -1039,7 +1039,7 @@ function renderOverview() {
             <span class="pill-code">${escapeHtml(sub.code)} • ${escapeHtml(sub.category)}</span>
             ${
               sub.missingNotice
-                ? '<span class="pill-warn">Missing in PDF</span>'
+                ? '<span class="pill-warn">Syllabus Pending</span>'
                 : `<span class="sub-pct">${s.pct}%</span>`
             }
           </div>
@@ -1145,7 +1145,7 @@ function renderSubjectView(sub) {
         <div class="card unit-card" style="border-color:#fde68a;padding:1rem;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem;">
             <h3 class="unit-title">${escapeHtml(unit.title)}</h3>
-            <span class="pill-warn">Missing in PDF</span>
+            <span class="pill-warn">Syllabus Pending</span>
           </div>
           <p class="unit-sub" style="color:#b45309;">${escapeHtml(unit.missingNotice)}</p>
         </div>

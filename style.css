@@ -700,3 +700,30 @@ button { cursor: pointer; }
 }
 .toast.show { display: block; }
 .hidden { display: none !important; }
+
+/* Footer */
+.app-footer {
+  margin-top: 2.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+.app-footer strong {
+  color: #0f172a;
+}
+.footer-dot {
+  color: #cbd5e1;
+}
+.footer-link {
+  color: #4f46e5;
+  font-weight: 600;
+  text-decoration: none;
+}
+.footer-link:hover {
+  text-decoration: underline;
+}
