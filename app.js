@@ -1,4 +1,8 @@
-const ADMIN_EMAILS = ['ashutoshaamonty@gmail.com', 'tideseren@gmail.com'];
+const ADMIN_ACCESS = {
+  'ashutoshaamonty@gmail.com': '*',
+  'tideseren@gmail.com': '*',
+  'ankitayo2005@gmail.com': ['ashutoshaamonty@gmail.com']
+};
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCjK6hvr-faQTcV5mRA1QTkZw8LoZyO2bU",
   authDomain: "project-b2096ed9-f6e9-4bfc-9ef.firebaseapp.com",
@@ -1145,12 +1149,17 @@ function getCurrentSubjects() {
   return (SYLLABUS_BY_YEAR[selectedYear] || SYLLABUS_BY_YEAR.year2).subjects;
 }
 
+function getAdminScope(user) {
+  if (!user || !user.email) return null;
+  const email = user.email.toLowerCase();
+  for (const [k, v] of Object.entries(ADMIN_ACCESS)) {
+    if (k.toLowerCase() === email) return v;
+  }
+  return null;
+}
+
 function isAdminUser(user) {
-  return !!(
-    user &&
-    user.email &&
-    ADMIN_EMAILS.some((e) => e.toLowerCase() === user.email.toLowerCase())
-  );
+  return getAdminScope(user) !== null;
 }
 
 function getTimeGreeting() {
@@ -1553,10 +1562,12 @@ function loadAdminDashboard() {
     return;
   }
   container.innerHTML = '<p class="unit-sub">Loading student progress...</p>';
-  fbDb
-    .collection('users')
-    .orderBy('updatedAt', 'desc')
-    .get()
+  const scope = getAdminScope(currentUser);
+  const queryPromise =
+    scope === '*'
+      ? fbDb.collection('users').orderBy('updatedAt', 'desc').get()
+      : fbDb.collection('users').where('email', 'in', scope).get();
+  queryPromise
     .then((snap) => {
       adminUsersCache = [];
       adminDetailState = null;
