@@ -1865,6 +1865,8 @@ const COURSES = {
 const STORAGE_KEY = 'syllabus_tracker_checklist_v1';
 const COURSE_STORAGE_KEY = 'syllabus_selected_course_v1';
 const YEAR_STORAGE_KEY = 'syllabus_selected_year_v1';
+const COLLAPSED_UNITS_KEY = 'syllabus_collapsed_units_v1';
+const COLLAPSED_CHAPTERS_KEY = 'syllabus_collapsed_chapters_v1';
 
 let selectedCourse = 'bca';
 let selectedYear = 'bca_y2';
@@ -1873,8 +1875,8 @@ let checkedMap = {};
 let activeTab = 'overview';
 let filterMode = 'all';
 let searchQuery = '';
-let expandedUnits = {};
-let expandedChapters = {};
+let collapsedUnits = {};
+let collapsedChapters = {};
 let pendingModalAction = null;
 let promptDismissedThisSession = false;
 let guestTickCount = 0;
@@ -2033,6 +2035,13 @@ function setCourseAndYear(course, yr, pushCloud) {
   }
 }
 
+function saveCollapseState() {
+  try {
+    localStorage.setItem(COLLAPSED_UNITS_KEY, JSON.stringify(collapsedUnits));
+    localStorage.setItem(COLLAPSED_CHAPTERS_KEY, JSON.stringify(collapsedChapters));
+  } catch (e) {}
+}
+
 function loadState() {
   checkedMap = {};
   try {
@@ -2042,6 +2051,10 @@ function loadState() {
     selectedCourse = norm.course;
     selectedYear = norm.year;
     modalCourse = selectedCourse;
+    const savedCU = localStorage.getItem(COLLAPSED_UNITS_KEY);
+    if (savedCU) collapsedUnits = JSON.parse(savedCU) || {};
+    const savedCC = localStorage.getItem(COLLAPSED_CHAPTERS_KEY);
+    if (savedCC) collapsedChapters = JSON.parse(savedCC) || {};
   } catch (e) {}
 }
 
@@ -2839,7 +2852,7 @@ function renderOverview() {
 
 function renderSubjectView(sub) {
   const stats = getSubjectStats(sub);
-  const allUnitsExpanded = sub.units.length > 0 && sub.units.filter((u) => !u.missingNotice).every((u) => !!expandedUnits[u.id]);
+  const allUnitsCollapsed = sub.units.length > 0 && sub.units.filter((u) => !u.missingNotice).every((u) => !!collapsedUnits[u.id]);
 
   let headerHtml = `
     <section class="card subject-header-card">
@@ -2901,7 +2914,7 @@ function renderSubjectView(sub) {
         <input id="topic-search" type="search" value="${escapeHtml(searchQuery)}"
           placeholder="Search chapter or topic..." class="search-input" />
         <button type="button" id="btn-toggle-collapse" class="btn btn-outline">
-          ${allUnitsExpanded ? 'Collapse All' : 'Expand All'}
+          ${allUnitsCollapsed ? 'Expand All' : 'Collapse All'}
         </button>
       </div>
     </div>
@@ -2927,7 +2940,7 @@ function renderSubjectView(sub) {
     }
 
     const uStats = getUnitStats(unit);
-    const isUnitOpen = forceOpenForFilter || !!expandedUnits[unit.id];
+    const isUnitOpen = forceOpenForFilter || !collapsedUnits[unit.id];
     const allUnitDone = uStats.total > 0 && uStats.done === uStats.total;
 
     let chaptersHtml = '';
@@ -2936,7 +2949,7 @@ function renderSubjectView(sub) {
     unit.groups.forEach((group, gi) => {
       const chapId = getChapterId(unit.id, gi);
       const cStats = getChapterStats(unit.id, gi, group);
-      const isChapOpen = forceOpenForFilter || !!expandedChapters[chapId];
+      const isChapOpen = forceOpenForFilter || !collapsedChapters[chapId];
       const allChapDone = cStats.total > 0 && cStats.done === cStats.total;
 
       let topicsHtml = '';
@@ -3125,7 +3138,9 @@ document.getElementById('main-content').addEventListener('click', (e) => {
   const toggleUnit = e.target.closest('[data-toggle-unit]');
   if (toggleUnit) {
     const uid = toggleUnit.getAttribute('data-toggle-unit');
-    expandedUnits[uid] = !expandedUnits[uid];
+    if (collapsedUnits[uid]) delete collapsedUnits[uid];
+    else collapsedUnits[uid] = true;
+    saveCollapseState();
     render();
     return;
   }
@@ -3133,7 +3148,9 @@ document.getElementById('main-content').addEventListener('click', (e) => {
   const toggleChapter = e.target.closest('[data-toggle-chapter]');
   if (toggleChapter) {
     const cid = toggleChapter.getAttribute('data-toggle-chapter');
-    expandedChapters[cid] = !expandedChapters[cid];
+    if (collapsedChapters[cid]) delete collapsedChapters[cid];
+    else collapsedChapters[cid] = true;
+    saveCollapseState();
     render();
     return;
   }
@@ -3217,13 +3234,21 @@ document.getElementById('main-content').addEventListener('click', (e) => {
     const sub = getCurrentSubjects().find((s) => s.id === activeTab);
     if (sub) {
       const validUnits = sub.units.filter((u) => !u.missingNotice);
-      const allExpanded = validUnits.every((u) => !!expandedUnits[u.id]);
+      const allCollapsed = validUnits.every((u) => !!collapsedUnits[u.id]);
       validUnits.forEach((u) => {
-        expandedUnits[u.id] = !allExpanded;
-        u.groups.forEach((_, gi) => {
-          expandedChapters[getChapterId(u.id, gi)] = !allExpanded;
-        });
+        if (allCollapsed) {
+          delete collapsedUnits[u.id];
+          u.groups.forEach((_, gi) => {
+            delete collapsedChapters[getChapterId(u.id, gi)];
+          });
+        } else {
+          collapsedUnits[u.id] = true;
+          u.groups.forEach((_, gi) => {
+            collapsedChapters[getChapterId(u.id, gi)] = true;
+          });
+        }
       });
+      saveCollapseState();
       render();
     }
   }
