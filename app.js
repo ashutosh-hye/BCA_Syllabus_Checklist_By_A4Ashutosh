@@ -1108,32 +1108,773 @@ const YEAR_2_SEM_3_SUBJECTS = [
   }
 ];
 
-const SYLLABUS_BY_YEAR = {
-  year1: {
-    id: 'year1',
-    label: 'BCA 1st Year',
-    semLabel: 'BCA 1st Year • Semester I',
-    subjects: YEAR_1_SEM_1_SUBJECTS,
-    sem2ComingSoon: true
+const BCOM_1_SEM_1_SUBJECTS = [
+  {
+    id: 'bcom_bom',
+    shortName: 'Business Org & Mgmt',
+    name: '1. Business Organization and Management',
+    code: 'DSC-1',
+    category: '4 Credits',
+    units: [
+      {
+        id: 'bcom_bom-u1',
+        title: 'Unit I — Introduction',
+        groups: [
+          {
+            name: 'Lesson 1: Management: An Overview',
+            topics: [
+              '1.2 Introduction',
+              '1.3 Evolution of Management (Classical, Neoclassical & Modern Era Theories)',
+              '1.4 Principles of Management',
+              '1.5 Nature of Management',
+              '1.6 Characteristics of Management',
+              '1.7 Levels of Management',
+              '1.8 Purpose of Management',
+              '1.9 Significance of Management',
+              '1.10 Functions of Management',
+              "1.11 Saint Kabir's Model of Managerial Competencies"
+            ]
+          },
+          {
+            name: 'Lesson 2: Organizations',
+            topics: [
+              '2.2 Introduction: Organisation',
+              "2.3 Stakeholder's Outlook about Organisation (Entrepreneur, Employees, Community, Consumers)",
+              '2.4 Scope of Organisation',
+              '2.5 Forms of Organisation',
+              '2.6 Business Formats (Brick and Mortar, Brick and Click, Click)',
+              '2.7 Difference between Brick & Mortar, Brick & Click and Click Organisation',
+              '2.8 E-Commerce (Types, Benefits, Drawbacks)',
+              '2.9 Franchising (Channels, Levels, Location, Benefits, Drawbacks)',
+              '2.10 Outsourcing (Classification, Benefits, Disadvantages)',
+              '2.11 Difference between Organisation and Management'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_bom-u2',
+        title: 'Unit II — Business Environment and Entrepreneurship',
+        groups: [
+          {
+            name: 'Lesson 3: Business Environment',
+            topics: [
+              '3.2 Introduction: Business Environment',
+              '3.3 Characteristics of Business Environment',
+              '3.4 Components of Business Environment',
+              '3.5 Business Friendly Environment',
+              '3.6 Elements of Business Friendly Environment',
+              '3.7 Ethics in Business',
+              '3.8 The Importance of Business Ethics',
+              '3.9 Principles of Business Ethics',
+              '3.10 Steps to Develop Business Ethics in a Company',
+              '3.11 Social Responsibility in Business',
+              '3.12 Reasons for Corporate Social Responsibility',
+              '3.13 Companies Act 2013: The CSR Legislations',
+              '3.14 Properties of Corporate Social Responsibility',
+              '3.15 Social Responsibility Components'
+            ]
+          },
+          {
+            name: 'Lesson 4: Entrepreneurship',
+            topics: [
+              '4.2 Introduction: Entrepreneurship',
+              '4.3 The Role of Entrepreneurs',
+              '4.4 Competencies for Entrepreneurs',
+              '4.5 Functions of an Entrepreneur',
+              '4.6 Types of Entrepreneurship',
+              '4.7 The Importance of Entrepreneurship',
+              '4.8 Entrepreneurship Process',
+              '4.9 Social Entrepreneurship',
+              '4.10 Features of Social Entrepreneurship',
+              '4.11 Qualities of Social Entrepreneurship',
+              '4.12 Social Entrepreneurship Process',
+              '4.13 Micro, Small and Medium Enterprises (MSMEs)',
+              "4.14 India's MSME Industry",
+              '4.15 Investments in the MSMEs',
+              '4.16 Major MSME Support Strategies'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_bom-u3',
+        title: 'Unit III — Planning and Organizing',
+        groups: [
+          {
+            name: 'Lesson 5: Planning',
+            topics: [
+              '5.2 Introduction: Planning',
+              '5.3 Types of Planning',
+              '5.4 Importance of Planning',
+              '5.5 Features of Planning',
+              '5.6 Goals of Planning',
+              '5.7 Planning Restrictions',
+              '5.8 Procedure for the Planning Function',
+              '5.9 External Planning Limitations',
+              '5.10 Strategic Planning',
+              '5.11 Operational Planning',
+              '5.12 Characteristics of Operational Planning',
+              '5.13 Decision-Making',
+              '5.14 Decision-Making Models',
+              '5.15 Decision-Making Techniques',
+              '5.16 Qualitative Decision-Making Techniques'
+            ]
+          },
+          {
+            name: 'Lesson 6: Organizing',
+            topics: [
+              '6.2 Introduction',
+              '6.3 Features of Organising',
+              '6.4 Elements of Organising',
+              '6.5 Importance of Organising',
+              '6.6 Process of Organising',
+              '6.7 Principles of Organising',
+              '6.8 Organisation',
+              '6.9 Organisational Process',
+              '6.10 Structure of Organisation',
+              '6.11 Virtual Organisation',
+              '6.12 Types of Virtual Organisation',
+              '6.13 Foundations of Organisational Structure',
+              '6.14 Departmentation',
+              '6.15 Configuration'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_bom-u4',
+        title: 'Unit IV — Directing and Controlling',
+        groups: [
+          {
+            name: 'Lesson 7: Motivation',
+            topics: [
+              '7.2 Introduction',
+              '7.3 Factors Essential for Effective Motivation',
+              '7.4 Features of Motivation',
+              '7.5 Significance of Motivation',
+              '7.6 Theories of Motivation',
+              '7.7 Rewards',
+              '7.8 The Efficacy of Rewards',
+              '7.9 Organisational Incentive System',
+              '7.10 Incentive-Based Motivation',
+              '7.11 Distinction between Reward and Incentives',
+              '7.12 Types of Incentives'
+            ]
+          },
+          {
+            name: 'Lesson 8: Leadership, Communication and Control',
+            topics: [
+              '8.2 Introduction: Leadership',
+              '8.3 Significance of Leadership',
+              '8.4 Features of Leadership',
+              '8.5 Leadership Styles',
+              '8.6 Qualities of a Leader',
+              '8.7 Leadership across the Organisation',
+              '8.8 Practices for Developing Leadership',
+              '8.9 Relationship among Leadership and Followership',
+              '8.10 Importance of Good Followership',
+              '8.11 Qualities of a Good Follower',
+              '8.12 Types of Follower',
+              '8.13 Communication',
+              '8.14 Features of Communication',
+              '8.15 Components of Communication',
+              '8.16 Process of Communication',
+              '8.17 Types of Communication',
+              '8.18 Qualities of a Good Communicator',
+              '8.19 Goals of Communication Effectiveness',
+              '8.20 Factors Influencing Communication Effectiveness',
+              '8.21 Controlling',
+              '8.22 Features of Controlling',
+              '8.23 Process of Controlling',
+              '8.24 Kinds of Control',
+              '8.25 Benefits of Controlling',
+              '8.26 Drawbacks of Controlling',
+              '8.27 Types of Control Mechanism'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_bom-u5',
+        title: 'Unit V — Indian Ethos and Contemporary Issues in Management',
+        groups: [
+          {
+            name: 'Lesson 9: Indian Ethos in Management',
+            topics: [
+              '9.2 Introduction',
+              '9.3 Nature of Ethics',
+              '9.4 Benefits of Ethics',
+              '9.5 Aims of Ethics',
+              '9.6 Principles of Ethics',
+              '9.7 Sources of Ethics',
+              '9.8 Theories of Ethics',
+              '9.9 Indian Culture and Ethics',
+              '9.10 Indian Ethos in Management (Bhagwad Gita, Lord Ganesha, Ramayana, Lord Hanuman, Saint Kabir, Ethical Leadership: Adi Godrej)',
+              '9.11 Holistic Management',
+              '9.12 Features of Holistic Management',
+              '9.13 Benefits of Holistic Management'
+            ]
+          },
+          {
+            name: 'Lesson 10: Business Organization and Management: Recent Developments',
+            topics: [
+              '10.2 Business Process Reengineering (BPR) (Principles, Process, Benefits, Drawbacks)',
+              '10.3 Learning Organisations (Features, Advantages, Elements, Limitations)',
+              '10.4 Six Sigma (Objectives, Benefits, Principles, DMAIC Life Cycle Model, Role)',
+              '10.5 Supply Chain Management (Features, Principles, Functions, Components)'
+            ]
+          },
+          {
+            name: 'Lesson 11: Emerging Concepts in Management',
+            topics: [
+              '11.2 Introduction: Diversity at Workplace',
+              '11.3 The Case for Workplace Diversity (Advantages, Disadvantages)',
+              '11.4 Workplace Diversity and Inclusion',
+              '11.5 Workforce Inclusion at Workplace',
+              '11.6 Work-Life Balance',
+              '11.7 The Case of Work-Life Balance (Negative Consequences)',
+              '11.8 Workplace Strategies for Improving Work-Life Balance (Advantages, Disadvantages)',
+              '11.9 Freelancing (Benefits, Drawbacks)',
+              '11.10 Internet and Freelance at Work',
+              '11.11 Difference between Freelancing and Working from Home',
+              '11.12 Flexi Time (Benefits, Drawbacks)',
+              '11.13 Work from Home',
+              '11.14 Characteristics of Work from Home (Advantages, Disadvantages)',
+              '11.15 Co-Sharing / Co-Working (Benefits, Drawbacks)'
+            ]
+          }
+        ]
+      }
+    ]
   },
-  year2: {
-    id: 'year2',
-    label: 'BCA 2nd Year',
-    semLabel: 'BCA 2nd Year • Semester III',
-    subjects: YEAR_2_SEM_3_SUBJECTS,
-    sem2ComingSoon: false
+  {
+    id: 'bcom_law',
+    shortName: 'Business Laws',
+    name: '2. Business Laws',
+    code: 'DSC-2',
+    category: '4 Credits',
+    units: [
+      {
+        id: 'bcom_law-u1',
+        title: 'Unit I — Indian Contract Act, 1872',
+        groups: [
+          {
+            name: 'Lesson 1: Indian Contract Act, 1972 (1872)',
+            topics: [
+              '1.2 Introduction',
+              '1.3 Application of The English Law',
+              '1.4 Meaning and Nature of Contract (Requirements, Essential Elements, Kinds of Contracts)',
+              '1.5 Offer and Acceptance (Determination, Essentials, Tender, Cross Offers, Acceptance, Communication & Revocation, Modes of Revocation/Lapse)',
+              "1.6 Capacity of Parties (Disqualification by Infancy, Minor's Agreement, Disqualification by Insanity)",
+              '1.7 Consideration (Definition, Essential Elements, When No Consideration is Necessary, Stranger to Contract)',
+              '1.8 Lawful Consideration or Objects',
+              '1.9 Free Consent (Coercion, Undue Influence, Distinction)',
+              '1.10 Fraud and Misrepresentation (Fraud, Misrepresentation, Distinction)',
+              '1.11 Void Agreement (Void Agreement vs Void Contract, Illegal vs Opposed to Public Policy, Mistake of Law, Wager, Collateral Transaction, Contingent Contract, Wagering vs Contingent)'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_law-u2',
+        title: 'Unit II — Discharge of Contract and Remedies for Breach',
+        groups: [
+          {
+            name: 'Lesson 2: Discharge of Contracts',
+            topics: [
+              '2.2 Introduction',
+              '2.3 Discharge of Contract (Agreement, Performance, Lapse of Time, Operation of Law, Material Alteration, Subsequent Impossibility, Breach)',
+              '2.4 Remedies for Breach of Contract (Rescission, Damages, Quantum Meruit, Specific Performance, Injunction)'
+            ]
+          },
+          {
+            name: 'Lesson 3: Contingent Contract and Quasi Contract',
+            topics: [
+              '3.2 Introduction',
+              '3.3 Contingent Contracts (Introduction, Characteristics, Rules)',
+              '3.4 Quasi Contracts (Introduction, Quasi-Contractual Obligations Sec. 68–72)'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_law-u3',
+        title: 'Unit III — Introduction to Special Contract',
+        groups: [
+          {
+            name: 'Lesson 4: Indemnity, Guarantee, Bailment, Pledge & Agency',
+            topics: [
+              '4.2 Introduction',
+              "4.3 Contract of Indemnity (Commencement of Indemnifier's Liability, Rights of Indemnity-Holder)",
+              "4.4 Contract of Guarantee (Definition, Essentials, Invalid Guarantee, Indemnity vs Guarantee, Kinds, Revocation, Surety's Liability, Rights of Surety, Co-Sureties Sec. 147, Discharge)",
+              '4.5 Contract of Bailment (Definition, Characteristics, Rights & Duties of Bailor & Bailee, Third Parties, Finder of Goods, Lien)',
+              '4.6 Contract of Pledge (Definition, Rights & Duties of Pawner & Pawnee, Termination of Bailment)',
+              '4.7 Contract of Agency (Definition, Creation, Extent & Delegation of Authority Sec. 186–195, Third Persons, Personal Liability, Rights & Duties, Termination)'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_law-u4',
+        title: 'Unit IV — The Sale of Goods Act, 1930',
+        groups: [
+          {
+            name: 'Lesson 5: The Sale of Goods Act 1930',
+            topics: [
+              '5.2 Introduction',
+              '5.3 Fundamental Concepts (Goods, Kinds of Goods, Effect of Perishing of Goods)',
+              '5.4 Contract of Sale',
+              '5.5 Sale Distinguished from Other Transactions (Hire Purchase, Work & Labour, Conditions & Warranties)',
+              '5.6 Implied Conditions and Warranties (Implied Warranties Sec. 14, Doctrine of Caveat Emptor)',
+              '5.7 Essentials of a Contract of Sale of Goods'
+            ]
+          },
+          {
+            name: 'Lesson 6: Transfer of Property in Contracts of Sale of Goods',
+            topics: [
+              '6.2 Introduction',
+              '6.3 Transfer of Property (Specific & Ascertained Goods, Appropriation of Goods, Transfer of Title)',
+              '6.4 Sale by Non-Owners',
+              '6.5 Reservation of Right of Disposal by Seller',
+              '6.6 Rights of Unpaid Seller (Against Goods, Against the Buyer Personally)'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_law-u5',
+        title: 'Unit V — The Limited Liability Partnership Act, 2008',
+        groups: [
+          {
+            name: 'Lesson 7: Meaning of Limited Liability Partnership',
+            topics: [
+              '7.2 Introduction',
+              '7.3 Meaning of LLP',
+              '7.4 Administration and Amendments in the Act',
+              '7.5 Features of LLP',
+              '7.6 LLP Agreement (Contents, Advantages, Disadvantages)',
+              '7.7 Difference between Partnership, Company and LLP',
+              '7.8 Incorporation of LLP (Sec. 11)',
+              '7.9 Registered Office of LLP (Sec. 13)',
+              '7.10 Provisions Relating to Name of LLP and Changes Therein (Sec. 15–21)'
+            ]
+          },
+          {
+            name: 'Lesson 8: Partners, Their Relations and Liabilities in a LLP',
+            topics: [
+              '8.2 Introduction',
+              '8.3 Who Can Be Partners of LLP (Qualifications, Disqualification Sec. 5)',
+              '8.4 Minimum and Maximum Number of Partners',
+              '8.5 Designated Partners (Appointment, DPIN, Disqualifications)',
+              '8.6 Liabilities of Designated Partners Sec. 8 (Changes, Relations, Punishment)',
+              '8.7 Termination of Partnership Interest (Termination, Obligations of Former Partner)',
+              '8.8 Registration of Changes in Partners',
+              '8.9 Partner as Agent of LLP',
+              "8.10 Extent of Liability of LLP (Limits, Partners' Liability, Holding Out, Unlimited Liability in Fraud)",
+              '8.11 Whistle Blowing'
+            ]
+          },
+          {
+            name: 'Lesson 9: Financial Disclosure and Winding Up of LLP',
+            topics: [
+              '9.2 Introduction',
+              '9.3 Meaning of Financial Disclosures of LLP (Books of Account, Annual Return, Other Compliances)',
+              '9.4 Taxation of LLP',
+              '9.5 Conversion into LLP (Partnership Firm, Private Company, Unlisted Public Company)',
+              '9.6 Effects of Registration of Conversion',
+              '9.7 Winding Up of LLP (Meaning, Modes)',
+              '9.8 Voluntary Winding Up (Steps Involved, Effect of Liquidation)',
+              '9.9 Compulsory Winding Up by the Tribunal (Steps)',
+              '9.10 Liquidator'
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'bcom_fa',
+    shortName: 'Financial Accounting',
+    name: '3. Financial Accounting',
+    code: 'DSC-3',
+    category: '4 Credits',
+    units: [
+      {
+        id: 'bcom_fa-u1',
+        title: 'Unit I — Theoretical Framework and Accounting Process',
+        groups: [
+          {
+            name: 'Lesson 1: Accounting: Its Concepts and Conventions',
+            topics: [
+              '1.2 Introduction',
+              '1.3 Accounting as an Information System (Functions, Advantages, Limitations, Users, Role of AI & Data Analytics)',
+              '1.4 Branches of Accounting',
+              '1.5 Basis of Accounting',
+              '1.6 Accounting Concepts',
+              '1.7 Essential Features of Accounting Principles',
+              '1.8 Accounting Conventions'
+            ]
+          },
+          {
+            name: 'Lesson 2: Accounting Standards',
+            topics: [
+              '2.2 Introduction',
+              '2.3 Utility of Accounting Standards',
+              '2.4 Accounting Standards in India',
+              '2.5 Procedure of Preparing Accounting Standards',
+              '2.6 Propagation of Accounting Standards',
+              '2.7 Preface to the Statements of Accounting Standards (ASB Formation, Scope & Functions, Audited Financial Statements, Compliance)'
+            ]
+          },
+          {
+            name: 'Lesson 3: Accounting Process',
+            topics: [
+              '3.2 Introduction',
+              '3.3 Meaning of Accounting Process',
+              '3.4 Details Contained in Subsidiary Books',
+              '3.5 Purchase Book',
+              '3.6 Sales Book',
+              '3.7 Purchase Return Book',
+              '3.8 Sales Return Book',
+              '3.9 Cash Book (and Bills Receivable)',
+              '3.10 Cash Book (Cash and Discount Columns)',
+              '3.11 Triple Column Cash Book',
+              '3.12 Petty Cash Book',
+              '3.13 Trial Balance'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_fa-u2',
+        title: 'Unit II — Business Income, PPE & Valuation of Inventory',
+        groups: [
+          {
+            name: 'Lesson 4: Business Income, AS-10 & Inventory',
+            topics: [
+              '4.2 Introduction',
+              '4.3 Business Income',
+              '4.4 AS-10 Property, Plant and Equipment',
+              '4.5 Meaning of Inventory',
+              '4.6 Significance of Inventory Valuation',
+              '4.7 Inventory Record Systems – Periodic and Perpetual',
+              '4.8 Inventories Taking',
+              '4.9 Methods of Inventory Valuation – Introduction of FIFO, LIFO and Weighted Average'
+            ]
+          },
+          {
+            name: 'Lesson 5: Inventory Management',
+            topics: [
+              '5.2 Introduction',
+              '5.3 Methods of Inventory Valuation – FIFO Method',
+              '5.4 FIFO Method – Periodic FIFO and Perpetual FIFO',
+              '5.5 LIFO Method – Periodic LIFO and Perpetual LIFO',
+              '5.6 Weighted Average Method – Periodic Average and Perpetual Average',
+              '5.7 Miscellaneous / Practical Problems'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_fa-u3',
+        title: 'Unit III — Financial Statements of Sole Proprietorship & NPOs',
+        groups: [
+          {
+            name: 'Lesson 6: Accounts from Incomplete Records: Single Entry System',
+            topics: [
+              '6.2 Introduction',
+              '6.3 Meaning and Definition of Single Entry System and Disadvantages',
+              '6.4 How to Ascertain Capital',
+              '6.5 Conversion into Double Entry',
+              '6.6 Checking Waste Book for Unrecorded Transactions',
+              '6.7 Preparation of Trading and P&L A/c & Balance Sheet from Single Entry Records'
+            ]
+          },
+          {
+            name: 'Lesson 7: Final Accounts of Not-for-Profit Organizations',
+            topics: [
+              '7.2 Introduction',
+              '7.3 Meaning of Final Accounts of Not-for-Profit Organisation',
+              '7.4 Receipt and Payment Account',
+              '7.5 Difference between Receipts & Payments A/c and Income & Expenditure A/c',
+              '7.6 Steps to Prepare Income and Expenditure A/c from Receipts and Payments A/c'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_fa-u4',
+        title: 'Unit IV — Accounting for Inland Branches, Departments and Leases',
+        groups: [
+          {
+            name: 'Lesson 8: Accounting for Branches and Departments',
+            topics: [
+              '8.2 Introduction',
+              '8.3 Meaning of Branch',
+              '8.4 Types of Branches',
+              '8.5 Accounting for Dependent Branch',
+              '8.6 Goods Returned and Cash Remitted by Branch Customers Directly to Head Office',
+              '8.7 Goods Sent to Another Branch and Goods Received from Another Branch',
+              '8.8 When Goods Are Sent to Branch at Cost Plus Profit',
+              '8.9 Stock and Debtor System',
+              '8.10 Department Accounting'
+            ]
+          },
+          {
+            name: 'Lesson 9: Lease Transactions: Concept & Classification',
+            topics: [
+              '9.2 Introduction',
+              '9.3 Meaning of Lease and its Accounting Standard',
+              '9.4 Features, Advantages and Disadvantages of Lease',
+              '9.5 Important Terms Used in Lease Agreement',
+              '9.6 Classification of Lease (Finance Lease and Operating Lease)',
+              '9.7 Difference between Operating and Financing Lease',
+              '9.8 Practical (Classification & MLP)',
+              '9.9 Accounting Treatment of Finance Lease',
+              '9.10 Accounting Treatment of Operating Lease',
+              '9.11 Accounting for Sale and Lease Back',
+              '9.12 Ind AS-116 Lease and AS-19'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_fa-u5',
+        title: 'Unit V — Computerized Accounting System',
+        groups: [
+          {
+            name: 'Lesson 10: Computerized Accounting System',
+            topics: [
+              '10.2 Introduction',
+              '10.3 Objectives of Computerized Accounting System',
+              '10.4 Creating a Company',
+              '10.5 Short Cut Keys Used at Gateways of Tally Related to Company/Companies',
+              '10.6 Accounting Features (General, Outstanding, Cost/Profit Centres, Invoicing, Budget & Scenario, Banking, Other)',
+              '10.7 General Configurations Used in Tally (Country, Naming, Dates, Numbers, Table, Import/Export, Other)',
+              '10.8 Numeric Symbol',
+              '10.9 Accounts / Inventories (Master Configuration, Accounts Master, Inventory Masters)',
+              '10.10 Ledgers and their Heads',
+              '10.11 Creating Groups'
+            ]
+          },
+          {
+            name: 'Lesson 11: Groups and Ledgers',
+            topics: [
+              '11.2 Introduction',
+              '11.3 Reserved Groups that Go into Balance Sheet',
+              '11.4 Ledger Creation within Groups (Multiple Ledgers, Buttons on Multiple Ledger Screen)',
+              '11.5 Groups Formation, Types of Groups and Group Formation under Inventory Info',
+              '11.6 Vouchers (Types of Vouchers)',
+              '11.7 Conversion of Voucher from One Type to Another'
+            ]
+          },
+          {
+            name: 'Lesson 12: Trial Balance, Cash Flow Statement and Reports',
+            topics: [
+              '12.2 Introduction',
+              '12.3 Generating Reports',
+              '12.4 Trial Balance',
+              '12.5 Cash Flow Statement',
+              '12.6 Cash Flow in Tally ERP.9',
+              '12.7 Fund Flow Statement',
+              '12.8 Selecting and Shutting a Company',
+              '12.9 Backup and Restore of Data of a Company'
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'bcom_evs',
+    shortName: 'Environmental Studies',
+    name: '4. Environmental Studies',
+    code: 'Core Module',
+    category: 'Compulsory',
+    units: [
+      {
+        id: 'bcom_evs-u1',
+        title: 'Unit 1 — Introduction to Environmental Studies (2 Lectures)',
+        groups: [
+          {
+            name: 'Core Topics',
+            topics: [
+              'Multidisciplinary nature of environmental studies',
+              'Scope and importance',
+              'Need for public awareness'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_evs-u2',
+        title: 'Unit 2 — Ecosystems (6 Lectures)',
+        groups: [
+          {
+            name: 'Core Topics',
+            topics: [
+              'What is an ecosystem? Structure and function of ecosystem',
+              'Energy flow in an ecosystem: food chains, food webs and ecological succession',
+              'Case studies: Forest, Grassland, Desert, and Aquatic ecosystems (ponds, streams, lakes, rivers, oceans, estuaries)'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_evs-u3',
+        title: 'Unit 3 — Natural Resources: Renewable and Non-renewable Resources (8 Lectures)',
+        groups: [
+          {
+            name: 'Core Topics',
+            topics: [
+              'Land resources and landuse change; Land degradation, soil erosion and desertification',
+              'Deforestation: Causes and impacts due to mining, dam building on environment, forests, biodiversity and tribal populations',
+              'Water: Use and over-exploitation of surface and ground water, floods, droughts, conflicts over water (international & inter-state)',
+              'Energy resources: Renewable and non-renewable energy sources, alternate energy sources, growing energy needs, case studies'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_evs-u4',
+        title: 'Unit 4 — Biodiversity and Conservation (8 Lectures)',
+        groups: [
+          {
+            name: 'Core Topics',
+            topics: [
+              'Levels of biological diversity: genetic, species and ecosystem diversity',
+              'Biogeographic zones of India; Biodiversity patterns and global biodiversity hot spots',
+              'India as a mega-biodiversity nation; Endangered and endemic species of India',
+              'Threats to biodiversity: Habitat loss, poaching of wildlife, man-wildlife conflicts, biological invasions',
+              'Conservation of biodiversity: In-situ and Ex-situ conservation of biodiversity',
+              'Ecosystem and biodiversity services: Ecological, economic, social, ethical, aesthetic and Informational value'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_evs-u5',
+        title: 'Unit 5 — Environmental Pollution (8 Lectures)',
+        groups: [
+          {
+            name: 'Core Topics',
+            topics: [
+              'Environmental pollution: types, causes, effects and controls (Air, water, soil and noise pollution)',
+              'Nuclear hazards and human health risks',
+              'Solid waste management: Control measures of urban and industrial waste',
+              'Pollution case studies'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_evs-u6',
+        title: 'Unit 6 — Environmental Policies & Practices (7 Lectures)',
+        groups: [
+          {
+            name: 'Core Topics',
+            topics: [
+              'Sustainability and sustainable development',
+              'Climate change, global warming, ozone layer depletion, acid rain and impacts on human communities and agriculture',
+              'Environment Laws: Environment Protection Act, Air Act, Water Act, Wildlife Protection Act, Forest Conservation Act',
+              'Nature reserves, tribal populations and rights, and human-wildlife conflicts in Indian context'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_evs-u7',
+        title: 'Unit 7 — Human Communities and the Environment (6 Lectures)',
+        groups: [
+          {
+            name: 'Core Topics',
+            topics: [
+              'Human population growth: Impacts on environment, human health and welfare',
+              'Resettlement and rehabilitation of project affected persons; case studies',
+              'Disaster management: floods, earthquake, cyclones and landslides',
+              'Environmental movements: Chipko, Silent Valley, Bishnois of Rajasthan',
+              'Environmental ethics: Role of Indian and other religions and cultures in environmental conservation',
+              'Environmental communication and public awareness, case studies (e.g., CNG vehicles in Delhi)'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bcom_evs-u8',
+        title: 'Unit 8 — Field Work (Equal to 5 Lectures)',
+        groups: [
+          {
+            name: 'Field Activities',
+            topics: [
+              'Visit to an area to document environmental assets: river / forest / flora / fauna, etc.',
+              'Visit to a local polluted site – Urban / Rural / Industrial / Agricultural',
+              'Study of common plants, insects, birds and basic principles of identification',
+              'Study of simple ecosystems – pond, river, Delhi Ridge, etc.'
+            ]
+          }
+        ]
+      }
+    ]
+  }
+];
+
+const COURSES = {
+  bca: {
+    id: 'bca',
+    name: 'BCA',
+    fullName: 'Bachelor of Computer Applications',
+    defaultYear: 'bca_y2',
+    years: {
+      bca_y1: {
+        id: 'bca_y1',
+        label: '1st Year (Semester I)',
+        shortLabel: '1st Year',
+        semLabel: 'BCA 1st Year • Semester I',
+        subjects: YEAR_1_SEM_1_SUBJECTS,
+        sem2ComingSoon: true
+      },
+      bca_y2: {
+        id: 'bca_y2',
+        label: '2nd Year (Semester III)',
+        shortLabel: '2nd Year',
+        semLabel: 'BCA 2nd Year • Semester III',
+        subjects: YEAR_2_SEM_3_SUBJECTS,
+        sem2ComingSoon: false
+      }
+    }
+  },
+  bcom: {
+    id: 'bcom',
+    name: 'DU B.Com',
+    fullName: 'B.Com (Delhi University)',
+    defaultYear: 'bcom_y1',
+    years: {
+      bcom_y1: {
+        id: 'bcom_y1',
+        label: '1st Year (Semester I)',
+        shortLabel: '1st Year',
+        semLabel: 'DU B.Com (Delhi University) 1st Year • Semester I',
+        subjects: BCOM_1_SEM_1_SUBJECTS,
+        sem2ComingSoon: false
+      }
+    }
   }
 };
 
-const STORAGE_KEY = 'bca_3rd_sem_checklist_v1';
-const YEAR_STORAGE_KEY = 'bca_selected_year_v1';
+const STORAGE_KEY = 'syllabus_tracker_checklist_v1';
+const COURSE_STORAGE_KEY = 'syllabus_selected_course_v1';
+const YEAR_STORAGE_KEY = 'syllabus_selected_year_v1';
 
-let selectedYear = 'year2';
+let selectedCourse = 'bca';
+let selectedYear = 'bca_y2';
+let modalCourse = 'bca';
 let checkedMap = {};
 let activeTab = 'overview';
 let filterMode = 'all';
 let searchQuery = '';
-let collapsedUnits = {};
+let expandedUnits = {};
+let expandedChapters = {};
 let pendingModalAction = null;
 let promptDismissedThisSession = false;
 let guestTickCount = 0;
@@ -1145,8 +1886,33 @@ let unsubscribeSnapshot = null;
 let adminUsersCache = [];
 let adminDetailState = null;
 
+function normalizeCourseYear(course, year) {
+  if (year === 'year1') return { course: 'bca', year: 'bca_y1' };
+  if (year === 'year2') return { course: 'bca', year: 'bca_y2' };
+  if (course && COURSES[course]) {
+    const yrs = COURSES[course].years;
+    if (year && yrs[year]) return { course, year };
+    return { course, year: COURSES[course].defaultYear };
+  }
+  for (const [cId, cObj] of Object.entries(COURSES)) {
+    if (year && cObj.years[year]) {
+      return { course: cId, year };
+    }
+  }
+  return { course: 'bca', year: 'bca_y2' };
+}
+
+function getCurrentCourseConfig() {
+  return COURSES[selectedCourse] || COURSES.bca;
+}
+
+function getCurrentYearConfig() {
+  const c = getCurrentCourseConfig();
+  return c.years[selectedYear] || c.years[c.defaultYear];
+}
+
 function getCurrentSubjects() {
-  return (SYLLABUS_BY_YEAR[selectedYear] || SYLLABUS_BY_YEAR.year2).subjects;
+  return getCurrentYearConfig().subjects;
 }
 
 function getAdminScope(user) {
@@ -1184,10 +1950,45 @@ function updateGreetingUI() {
   }
 }
 
+function renderHeaderYearButtons() {
+  const yearBar = document.getElementById('year-bar');
+  if (!yearBar) return;
+  const c = getCurrentCourseConfig();
+  yearBar.innerHTML = Object.values(c.years)
+    .map(
+      (y) => `
+      <button type="button" data-select-year="${y.id}" class="year-pill ${y.id === selectedYear ? 'active' : ''}">
+        ${escapeHtml(y.label)}
+      </button>
+    `
+    )
+    .join('');
+}
+
+function renderModalYearChoices() {
+  const container = document.getElementById('modal-year-choices');
+  if (!container) return;
+  const c = COURSES[modalCourse] || COURSES.bca;
+  document.querySelectorAll('[data-modal-course]').forEach((btn) => {
+    btn.classList.toggle('active', btn.getAttribute('data-modal-course') === c.id);
+  });
+  container.innerHTML = Object.values(c.years)
+    .map(
+      (y) => `
+      <button type="button" data-pick-course="${c.id}" data-pick-year="${y.id}" class="year-choice-btn">
+        <div style="font-weight:700;font-size:0.95rem;">${escapeHtml(c.name)} ${escapeHtml(y.shortLabel)}</div>
+        <div style="font-size:0.78rem;color:#64748b;margin-top:0.15rem;">${escapeHtml(y.semLabel)}</div>
+      </button>
+    `
+    )
+    .join('');
+}
+
 function updateYearUI() {
-  const cfg = SYLLABUS_BY_YEAR[selectedYear] || SYLLABUS_BY_YEAR.year2;
+  const cfg = getCurrentYearConfig();
   const badge = document.getElementById('header-sem-badge');
   if (badge) badge.textContent = cfg.semLabel;
+
   const wrap = document.getElementById('year-selector-wrap');
   if (wrap) {
     if (currentUser && !isAdminUser(currentUser)) {
@@ -1196,23 +1997,23 @@ function updateYearUI() {
       wrap.classList.remove('hidden');
     }
   }
-  document.querySelectorAll('[data-select-year]').forEach((btn) => {
-    if (btn.getAttribute('data-select-year') === selectedYear) {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
-    }
+
+  document.querySelectorAll('[data-select-course]').forEach((btn) => {
+    btn.classList.toggle('active', btn.getAttribute('data-select-course') === selectedCourse);
   });
+  renderHeaderYearButtons();
 }
 
-function setYear(yr, pushCloud) {
-  if (!SYLLABUS_BY_YEAR[yr]) return;
-  selectedYear = yr;
+function setCourseAndYear(course, yr, pushCloud) {
+  const norm = normalizeCourseYear(course, yr);
+  selectedCourse = norm.course;
+  selectedYear = norm.year;
   activeTab = 'overview';
   filterMode = 'all';
   searchQuery = '';
   try {
-    localStorage.setItem(YEAR_STORAGE_KEY, yr);
+    localStorage.setItem(COURSE_STORAGE_KEY, selectedCourse);
+    localStorage.setItem(YEAR_STORAGE_KEY, selectedYear);
   } catch (e) {}
   updateYearUI();
   render();
@@ -1224,10 +2025,12 @@ function setYear(yr, pushCloud) {
 function loadState() {
   checkedMap = {};
   try {
+    const savedCourse = localStorage.getItem(COURSE_STORAGE_KEY);
     const savedYr = localStorage.getItem(YEAR_STORAGE_KEY);
-    if (savedYr && SYLLABUS_BY_YEAR[savedYr]) {
-      selectedYear = savedYr;
-    }
+    const norm = normalizeCourseYear(savedCourse, savedYr);
+    selectedCourse = norm.course;
+    selectedYear = norm.year;
+    modalCourse = selectedCourse;
   } catch (e) {}
 }
 
@@ -1235,6 +2038,7 @@ function saveState(skipCloud) {
   if (!currentUser) return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(checkedMap));
+    localStorage.setItem(COURSE_STORAGE_KEY, selectedCourse);
     localStorage.setItem(YEAR_STORAGE_KEY, selectedYear);
   } catch (e) {}
   if (!skipCloud && fbDb) {
@@ -1299,12 +2103,13 @@ function updateAuthUI() {
   updateYearUI();
 }
 
-function getYearStats(yr) {
-  const subjects = (SYLLABUS_BY_YEAR[yr] || SYLLABUS_BY_YEAR.year2).subjects;
+function getYearStatsFor(courseId, yearId) {
+  const c = COURSES[courseId] || COURSES.bca;
+  const y = c.years[yearId] || c.years[c.defaultYear];
   let total = 0;
   let done = 0;
   const breakdown = {};
-  subjects.forEach((sub) => {
+  y.subjects.forEach((sub) => {
     const s = getSubjectStats(sub);
     total += s.total;
     done += s.done;
@@ -1323,15 +2128,17 @@ function getYearStats(yr) {
 
 function pushToCloud() {
   if (!currentUser || !fbDb) return;
-  const activeStats = getYearStats(selectedYear);
-  const y1Stats = getYearStats('year1');
-  const y2Stats = getYearStats('year2');
+  const activeStats = getYearStatsFor(selectedCourse, selectedYear);
+  const y1Stats = getYearStatsFor('bca', 'bca_y1');
+  const y2Stats = getYearStatsFor('bca', 'bca_y2');
+  const bcomY1Stats = getYearStatsFor('bcom', 'bcom_y1');
   const payload = {
     email: currentUser.email || '',
     displayName:
       currentUser.displayName ||
       (currentUser.email ? currentUser.email.split('@')[0] : 'Student'),
     photoURL: currentUser.photoURL || '',
+    selectedCourse: selectedCourse,
     selectedYear: selectedYear,
     checkedMap: checkedMap,
     overallPct: activeStats.pct,
@@ -1346,6 +2153,10 @@ function pushToCloud() {
     year2Done: y2Stats.done,
     year2Total: y2Stats.total,
     year2Subjects: y2Stats.breakdown,
+    bcomY1Pct: bcomY1Stats.pct,
+    bcomY1Done: bcomY1Stats.done,
+    bcomY1Total: bcomY1Stats.total,
+    bcomY1Subjects: bcomY1Stats.breakdown,
     updatedAt: new Date().toISOString()
   };
   fbDb
@@ -1353,6 +2164,12 @@ function pushToCloud() {
     .doc(currentUser.uid)
     .set(payload)
     .catch(() => {});
+}
+
+function openCourseYearPickerModal() {
+  modalCourse = selectedCourse;
+  renderModalYearChoices();
+  document.getElementById('year-picker-modal').classList.add('open');
 }
 
 function startCloudListener(user) {
@@ -1366,11 +2183,13 @@ function startCloudListener(user) {
     (doc) => {
       if (doc.exists && doc.data()) {
         const data = doc.data();
-        if (data.selectedYear && SYLLABUS_BY_YEAR[data.selectedYear]) {
-          selectedYear = data.selectedYear;
+        if (data.selectedYear) {
+          const norm = normalizeCourseYear(data.selectedCourse, data.selectedYear);
+          selectedCourse = norm.course;
+          selectedYear = norm.year;
           updateYearUI();
         } else if (guestTickCount === 0) {
-          document.getElementById('year-picker-modal').classList.add('open');
+          openCourseYearPickerModal();
         }
         if (data.checkedMap) {
           if (guestTickCount > 0) {
@@ -1388,7 +2207,7 @@ function startCloudListener(user) {
         }
       } else {
         guestTickCount = 0;
-        document.getElementById('year-picker-modal').classList.add('open');
+        openCourseYearPickerModal();
         pushToCloud();
       }
     },
@@ -1420,20 +2239,42 @@ function initFirebase() {
   }
 }
 
-function renderAdminUserCard(u, yr, cacheIdx) {
+function getStudentStatsForYear(u, yrKey) {
+  if (yrKey === 'bca_y1') {
+    return {
+      pct: u.year1Pct ?? u.overallPct ?? 0,
+      done: u.year1Done ?? u.doneCount ?? 0,
+      total: u.year1Total ?? u.totalCount ?? 0,
+      subjectsObj: u.year1Subjects || u.subjectStats
+    };
+  }
+  if (yrKey === 'bcom_y1') {
+    return {
+      pct: u.bcomY1Pct ?? u.overallPct ?? 0,
+      done: u.bcomY1Done ?? u.doneCount ?? 0,
+      total: u.bcomY1Total ?? u.totalCount ?? 0,
+      subjectsObj: u.bcomY1Subjects || u.subjectStats
+    };
+  }
+  return {
+    pct: u.year2Pct ?? u.overallPct ?? 0,
+    done: u.year2Done ?? u.doneCount ?? 0,
+    total: u.year2Total ?? u.totalCount ?? 0,
+    subjectsObj: u.year2Subjects || u.subjectStats
+  };
+}
+
+function renderAdminUserCard(u, yrKey, cacheIdx) {
   const name = escapeHtml(u.displayName || 'Student');
   const email = escapeHtml(u.email || '');
-  const pct = yr === 'year1' ? (u.year1Pct ?? u.overallPct ?? 0) : (u.year2Pct ?? u.overallPct ?? 0);
-  const done = yr === 'year1' ? (u.year1Done ?? u.doneCount ?? 0) : (u.year2Done ?? u.doneCount ?? 0);
-  const total = yr === 'year1' ? (u.year1Total ?? u.totalCount ?? 0) : (u.year2Total ?? u.totalCount ?? 0);
-  const subjectsObj = yr === 'year1' ? (u.year1Subjects || u.subjectStats) : (u.year2Subjects || u.subjectStats);
+  const st = getStudentStatsForYear(u, yrKey);
   const updated = u.updatedAt ? new Date(u.updatedAt).toLocaleString() : 'Never';
   const initial = (u.displayName || u.email || 'S').trim().charAt(0).toUpperCase();
   const avatarHtml = u.photoURL
     ? `<img src="${escapeHtml(u.photoURL)}" class="avatar-img" alt="" />`
     : `<span class="avatar-fallback">${escapeHtml(initial)}</span>`;
-  const pills = subjectsObj
-    ? Object.entries(subjectsObj)
+  const pills = st.subjectsObj
+    ? Object.entries(st.subjectsObj)
         .map(([sName, sPct]) => `<span class="admin-sub-pill">${escapeHtml(sName)}: <strong>${sPct}%</strong></span>`)
         .join('')
     : '';
@@ -1448,12 +2289,12 @@ function renderAdminUserCard(u, yr, cacheIdx) {
           </div>
         </div>
         <div style="text-align:right;">
-          <div style="font-weight:700;font-size:1rem;color:#4f46e5;">${pct}%</div>
-          <div style="font-size:0.72rem;color:#64748b;">${done}/${total} topics</div>
+          <div style="font-weight:700;font-size:1rem;color:#4f46e5;">${st.pct}%</div>
+          <div style="font-size:0.72rem;color:#64748b;">${st.done}/${st.total} topics</div>
         </div>
       </div>
       <div class="progress-track progress-track-sm" style="margin-top:0.5rem;">
-        <div class="progress-fill" style="width:${pct}%"></div>
+        <div class="progress-fill" style="width:${st.pct}%"></div>
       </div>
       ${pills ? `<div class="admin-sub-pills">${pills}</div>` : ''}
       <div style="margin-top:0.45rem;text-align:right;font-size:0.72rem;font-weight:600;color:#4f46e5;">
@@ -1469,14 +2310,14 @@ function renderAdminStudentDetail(idx, filter) {
   if (!entry) return;
   adminDetailState = { idx, filter };
   const u = entry.user;
-  const yr = entry.yr;
+  const courseId = entry.course;
+  const yrKey = entry.yr;
   const studentMap = u.checkedMap || {};
-  const cfg = SYLLABUS_BY_YEAR[yr] || SYLLABUS_BY_YEAR.year2;
+  const cCfg = COURSES[courseId] || COURSES.bca;
+  const cfg = cCfg.years[yrKey] || cCfg.years[cCfg.defaultYear];
+  const st = getStudentStatsForYear(u, yrKey);
   const name = escapeHtml(u.displayName || 'Student');
   const email = escapeHtml(u.email || '');
-  const pct = yr === 'year1' ? (u.year1Pct ?? u.overallPct ?? 0) : (u.year2Pct ?? u.overallPct ?? 0);
-  const done = yr === 'year1' ? (u.year1Done ?? u.doneCount ?? 0) : (u.year2Done ?? u.doneCount ?? 0);
-  const total = yr === 'year1' ? (u.year1Total ?? u.totalCount ?? 0) : (u.year2Total ?? u.totalCount ?? 0);
   const initial = (u.displayName || u.email || 'S').trim().charAt(0).toUpperCase();
   const avatarHtml = u.photoURL
     ? `<img src="${escapeHtml(u.photoURL)}" class="avatar-img" alt="" />`
@@ -1492,24 +2333,33 @@ function renderAdminStudentDetail(idx, filter) {
       if (unit.missingNotice) return;
       let unitTopicsHtml = '';
       unit.groups.forEach((g, gi) => {
+        let groupTopicsHtml = '';
         g.topics.forEach((t, ti) => {
           subTotal++;
           const isTicked = !!studentMap[getTopicId(unit.id, gi, ti)];
           if (isTicked) subDone++;
           if (filter === 'completed' && !isTicked) return;
           if (filter === 'pending' && isTicked) return;
-          unitTopicsHtml += `
+          groupTopicsHtml += `
             <div class="admin-topic-item ${isTicked ? 'admin-topic-done' : 'admin-topic-pending'}">
               <span>${isTicked ? '✅' : '⬜'}</span>
               <span>${escapeHtml(t)}</span>
             </div>
           `;
         });
+        if (groupTopicsHtml) {
+          unitTopicsHtml += `
+            <div style="margin-top:0.35rem;">
+              <div style="font-size:0.72rem;font-weight:700;color:#64748b;margin-bottom:0.15rem;">${escapeHtml(g.name)}</div>
+              ${groupTopicsHtml}
+            </div>
+          `;
+        }
       });
       if (unitTopicsHtml) {
         unitsHtml += `
           <div class="admin-detail-unit">
-            <div style="font-size:0.78rem;font-weight:700;margin-bottom:0.25rem;">${escapeHtml(unit.title)}</div>
+            <div style="font-size:0.8rem;font-weight:700;margin-bottom:0.2rem;">${escapeHtml(unit.title)}</div>
             ${unitTopicsHtml}
           </div>
         `;
@@ -1547,8 +2397,8 @@ function renderAdminStudentDetail(idx, filter) {
         </div>
       </div>
       <div style="text-align:right;">
-        <div style="font-weight:700;font-size:1.05rem;color:#4f46e5;">${pct}%</div>
-        <div style="font-size:0.75rem;color:#64748b;">${done}/${total} topics done</div>
+        <div style="font-weight:700;font-size:1.05rem;color:#4f46e5;">${st.pct}%</div>
+        <div style="font-size:0.75rem;color:#64748b;">${st.done}/${st.total} topics done</div>
       </div>
     </div>
     ${subjectsHtml}
@@ -1571,49 +2421,80 @@ function loadAdminDashboard() {
     .then((snap) => {
       adminUsersCache = [];
       adminDetailState = null;
-      const y1Users = [];
-      const y2Users = [];
+      const grouped = {
+        bca: { bca_y1: [], bca_y2: [] },
+        bcom: { bcom_y1: [] }
+      };
+
       snap.forEach((doc) => {
         const d = doc.data();
-        const yr = d.selectedYear === 'year1' ? 'year1' : 'year2';
+        const norm = normalizeCourseYear(d.selectedCourse, d.selectedYear);
         const idx = adminUsersCache.length;
-        adminUsersCache.push({ user: d, yr });
-        if (yr === 'year1') {
-          y1Users.push({ user: d, idx });
-        } else {
-          y2Users.push({ user: d, idx });
+        adminUsersCache.push({ user: d, course: norm.course, yr: norm.year });
+        if (grouped[norm.course] && grouped[norm.course][norm.year]) {
+          grouped[norm.course][norm.year].push({ user: d, idx });
         }
       });
 
-      const y1Avg = y1Users.length
-        ? Math.round(y1Users.reduce((acc, item) => acc + (item.user.year1Pct ?? item.user.overallPct ?? 0), 0) / y1Users.length)
-        : 0;
-      const y2Avg = y2Users.length
-        ? Math.round(y2Users.reduce((acc, item) => acc + (item.user.year2Pct ?? item.user.overallPct ?? 0), 0) / y2Users.length)
-        : 0;
-
-      const buildYearBox = (yrKey, title, subtitle, list, avgPct) => `
-        <div class="admin-year-box">
-          <button type="button" data-admin-toggle="${yrKey}" class="admin-year-header">
-            <div>
-              <div style="font-weight:700;font-size:0.95rem;color:#0f172a;">${title}</div>
-              <div style="font-size:0.76rem;color:#64748b;">${subtitle} • <strong>${list.length}</strong> students • Avg: <strong>${avgPct}%</strong></div>
+      const buildYearBox = (yrKey, title, subtitle, list) => {
+        const avgPct = list.length
+          ? Math.round(list.reduce((acc, item) => acc + getStudentStatsForYear(item.user, yrKey).pct, 0) / list.length)
+          : 0;
+        return `
+          <div class="admin-year-box">
+            <button type="button" data-admin-toggle="${yrKey}" class="admin-year-header">
+              <div>
+                <div style="font-weight:700;font-size:0.92rem;">${escapeHtml(title)}</div>
+                <div style="font-size:0.75rem;color:#64748b;">${escapeHtml(subtitle)} • <strong>${list.length}</strong> students • Avg: <strong>${avgPct}%</strong></div>
+              </div>
+              <span style="font-size:0.76rem;font-weight:600;color:#4f46e5;">View Students ▾</span>
+            </button>
+            <div id="admin-box-${yrKey}" class="admin-year-body hidden">
+              ${
+                list.length
+                  ? list.map((item) => renderAdminUserCard(item.user, yrKey, item.idx)).join('')
+                  : '<p class="unit-sub">No students have signed in for this year yet.</p>'
+              }
             </div>
-            <span style="font-size:0.78rem;font-weight:600;color:#4f46e5;">View Students ▾</span>
-          </button>
-          <div id="admin-box-${yrKey}" class="admin-year-body hidden">
-            ${
-              list.length
-                ? list.map((item) => renderAdminUserCard(item.user, yrKey, item.idx)).join('')
-                : '<p class="unit-sub">No students have signed in for this year yet.</p>'
-            }
           </div>
-        </div>
-      `;
+        `;
+      };
 
-      container.innerHTML =
-        buildYearBox('year1', 'BCA 1st Year', 'Semester I', y1Users, y1Avg) +
-        buildYearBox('year2', 'BCA 2nd Year', 'Semester III', y2Users, y2Avg);
+      const buildCourseBox = (courseKey) => {
+        const cCfg = COURSES[courseKey];
+        const yearKeys = Object.keys(cCfg.years);
+        const allCourseStudents = yearKeys.flatMap((yk) => grouped[courseKey][yk] || []);
+        const courseAvg = allCourseStudents.length
+          ? Math.round(
+              allCourseStudents.reduce((acc, item) => {
+                const yr = adminUsersCache[item.idx].yr;
+                return acc + getStudentStatsForYear(item.user, yr).pct;
+              }, 0) / allCourseStudents.length
+            )
+          : 0;
+        const yearsHtml = yearKeys
+          .map((yk) => {
+            const yCfg = cCfg.years[yk];
+            return buildYearBox(yk, `${cCfg.name} ${yCfg.shortLabel}`, yCfg.semLabel, grouped[courseKey][yk] || []);
+          })
+          .join('');
+        return `
+          <div class="admin-course-box">
+            <button type="button" data-admin-course-toggle="${courseKey}" class="admin-course-header">
+              <div>
+                <div style="font-weight:700;font-size:1rem;">${escapeHtml(cCfg.name)} — ${escapeHtml(cCfg.fullName)}</div>
+                <div style="font-size:0.78rem;color:#64748b;margin-top:0.15rem;"><strong>${allCourseStudents.length}</strong> students • Overall Avg: <strong>${courseAvg}%</strong></div>
+              </div>
+              <span style="font-size:0.8rem;font-weight:600;color:#4f46e5;">Open Years ▾</span>
+            </button>
+            <div id="admin-course-box-${courseKey}" class="admin-course-body hidden">
+              ${yearsHtml}
+            </div>
+          </div>
+        `;
+      };
+
+      container.innerHTML = buildCourseBox('bca') + buildCourseBox('bcom');
     })
     .catch((err) => {
       container.innerHTML = `<p class="sync-error">Could not load users: ${escapeHtml(err.message || 'Permission error')}</p>`;
@@ -1622,6 +2503,20 @@ function loadAdminDashboard() {
 
 function getTopicId(unitId, groupIdx, topicIdx) {
   return `${unitId}__g${groupIdx}__t${topicIdx}`;
+}
+
+function getChapterId(unitId, groupIdx) {
+  return `${unitId}__g${groupIdx}`;
+}
+
+function getChapterStats(unitId, groupIdx, group) {
+  let total = 0;
+  let done = 0;
+  group.topics.forEach((_, ti) => {
+    total++;
+    if (checkedMap[getTopicId(unitId, groupIdx, ti)]) done++;
+  });
+  return { total, done, left: total - done, pct: total ? Math.round((done / total) * 100) : 0 };
 }
 
 function getUnitStats(unit) {
@@ -1755,7 +2650,7 @@ function renderTabs() {
 
 function renderOverview() {
   const subjects = getCurrentSubjects();
-  const cfg = SYLLABUS_BY_YEAR[selectedYear] || SYLLABUS_BY_YEAR.year2;
+  const cfg = getCurrentYearConfig();
   let cards = '';
   subjects.forEach((sub) => {
     const s = getSubjectStats(sub);
@@ -1805,6 +2700,8 @@ function renderOverview() {
 
 function renderSubjectView(sub) {
   const stats = getSubjectStats(sub);
+  const allUnitsExpanded = sub.units.length > 0 && sub.units.filter((u) => !u.missingNotice).every((u) => !!expandedUnits[u.id]);
+
   let headerHtml = `
     <section class="card subject-header-card">
       <div class="subject-header-top">
@@ -1863,9 +2760,9 @@ function renderSubjectView(sub) {
       </div>
       <div class="search-wrap">
         <input id="topic-search" type="search" value="${escapeHtml(searchQuery)}"
-          placeholder="Search topic..." class="search-input" />
+          placeholder="Search chapter or topic..." class="search-input" />
         <button type="button" id="btn-toggle-collapse" class="btn btn-outline">
-          ${sub.units.every((u) => collapsedUnits[u.id]) ? 'Expand All' : 'Collapse All'}
+          ${allUnitsExpanded ? 'Collapse All' : 'Expand All'}
         </button>
       </div>
     </div>
@@ -1873,6 +2770,7 @@ function renderSubjectView(sub) {
   `;
 
   const query = searchQuery.trim().toLowerCase();
+  const forceOpenForFilter = query !== '' || filterMode !== 'all';
   let unitsHtml = '';
 
   sub.units.forEach((unit) => {
@@ -1890,13 +2788,18 @@ function renderSubjectView(sub) {
     }
 
     const uStats = getUnitStats(unit);
-    const isCollapsed = !!collapsedUnits[unit.id];
+    const isUnitOpen = forceOpenForFilter || !!expandedUnits[unit.id];
     const allUnitDone = uStats.total > 0 && uStats.done === uStats.total;
 
-    let groupsHtml = '';
+    let chaptersHtml = '';
     let visibleTopicCount = 0;
 
     unit.groups.forEach((group, gi) => {
+      const chapId = getChapterId(unit.id, gi);
+      const cStats = getChapterStats(unit.id, gi, group);
+      const isChapOpen = forceOpenForFilter || !!expandedChapters[chapId];
+      const allChapDone = cStats.total > 0 && cStats.done === cStats.total;
+
       let topicsHtml = '';
       group.topics.forEach((topic, ti) => {
         const tid = getTopicId(unit.id, gi, ti);
@@ -1916,27 +2819,46 @@ function renderSubjectView(sub) {
       });
 
       if (topicsHtml) {
-        groupsHtml += `
-          <div class="group-block">
-            <div class="group-title">${escapeHtml(group.name)}</div>
-            <div>${topicsHtml}</div>
+        chaptersHtml += `
+          <div class="chapter-card">
+            <div class="chapter-header ${isChapOpen ? '' : 'collapsed'}">
+              <button type="button" data-toggle-chapter="${chapId}" class="chapter-toggle">
+                <span class="chapter-arrow ${isChapOpen ? 'open' : ''}">▶</span>
+                <div>
+                  <div class="chapter-title">${escapeHtml(group.name)}</div>
+                  <div class="chapter-sub">${cStats.done}/${cStats.total} done • ${cStats.left} left (${cStats.pct}%)</div>
+                </div>
+              </button>
+              <div class="chapter-actions">
+                <div class="chapter-mini-bar">
+                  <div class="progress-fill" style="width: ${cStats.pct}%"></div>
+                </div>
+                <button type="button" data-mark-chapter="${chapId}" data-mark-val="${allChapDone ? '0' : '1'}"
+                  class="btn-chapter-done ${allChapDone ? 'done' : ''}">
+                  ${allChapDone ? '✓ Done' : 'Mark Done'}
+                </button>
+              </div>
+            </div>
+            <div class="chapter-body ${isChapOpen ? '' : 'hidden'}">
+              ${topicsHtml}
+            </div>
           </div>
         `;
       }
     });
 
-    if ((query || filterMode !== 'all') && visibleTopicCount === 0) {
+    if (forceOpenForFilter && visibleTopicCount === 0) {
       return;
     }
 
     unitsHtml += `
       <div class="card unit-card">
-        <div class="unit-header ${isCollapsed ? 'collapsed' : ''}">
+        <div class="unit-header ${isUnitOpen ? '' : 'collapsed'}">
           <button type="button" data-toggle-unit="${unit.id}" class="unit-toggle">
-            <span class="unit-arrow ${isCollapsed ? '' : 'open'}">▶</span>
+            <span class="unit-arrow ${isUnitOpen ? 'open' : ''}">▶</span>
             <div>
               <h3 class="unit-title">${escapeHtml(unit.title)}</h3>
-              <p class="unit-sub">${uStats.done}/${uStats.total} done • ${uStats.left} left (${uStats.pct}%)</p>
+              <p class="unit-sub">${unit.groups.length} ${unit.groups.length === 1 ? 'chapter' : 'chapters'} • ${uStats.done}/${uStats.total} done • ${uStats.left} left (${uStats.pct}%)</p>
             </div>
           </button>
           <div class="unit-actions">
@@ -1949,8 +2871,8 @@ function renderSubjectView(sub) {
             </button>
           </div>
         </div>
-        <div class="unit-body ${isCollapsed ? 'hidden' : ''}">
-          ${groupsHtml || '<p class="unit-sub" style="padding:0.5rem;">No matching topics.</p>'}
+        <div class="unit-body ${isUnitOpen ? '' : 'hidden'}">
+          ${chaptersHtml || '<p class="unit-sub" style="padding:0.5rem;">No matching topics.</p>'}
         </div>
       </div>
     `;
@@ -1994,20 +2916,43 @@ function render() {
   }
 }
 
-// Year Selector Events
-document.querySelectorAll('[data-select-year]').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    setYear(btn.getAttribute('data-select-year'), true);
-  });
+// Header Course & Year Selector Events
+document.getElementById('course-bar').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-select-course]');
+  if (!btn) return;
+  const cId = btn.getAttribute('data-select-course');
+  if (!COURSES[cId]) return;
+  setCourseAndYear(cId, COURSES[cId].defaultYear, true);
 });
 
-document.querySelectorAll('[data-pick-year]').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const yr = btn.getAttribute('data-pick-year');
-    document.getElementById('year-picker-modal').classList.remove('open');
-    setYear(yr, true);
-    showToast(`${SYLLABUS_BY_YEAR[yr].label} selected!`);
-  });
+document.getElementById('year-bar').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-select-year]');
+  if (!btn) return;
+  setCourseAndYear(selectedCourse, btn.getAttribute('data-select-year'), true);
+});
+
+// Modal Course & Year Picker Events
+document.getElementById('modal-course-bar').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-modal-course]');
+  if (!btn) return;
+  modalCourse = btn.getAttribute('data-modal-course');
+  renderModalYearChoices();
+});
+
+document.getElementById('modal-year-choices').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-pick-year]');
+  if (!btn) return;
+  const cId = btn.getAttribute('data-pick-course');
+  const yr = btn.getAttribute('data-pick-year');
+  document.getElementById('year-picker-modal').classList.remove('open');
+  setCourseAndYear(cId, yr, true);
+  const cCfg = COURSES[cId];
+  const yCfg = cCfg && cCfg.years[yr];
+  if (yCfg) showToast(`${yCfg.semLabel} selected!`);
+});
+
+document.getElementById('year-picker-close').addEventListener('click', () => {
+  document.getElementById('year-picker-modal').classList.remove('open');
 });
 
 // Tab & Content Events
@@ -2041,8 +2986,42 @@ document.getElementById('main-content').addEventListener('click', (e) => {
   const toggleUnit = e.target.closest('[data-toggle-unit]');
   if (toggleUnit) {
     const uid = toggleUnit.getAttribute('data-toggle-unit');
-    collapsedUnits[uid] = !collapsedUnits[uid];
+    expandedUnits[uid] = !expandedUnits[uid];
     render();
+    return;
+  }
+
+  const toggleChapter = e.target.closest('[data-toggle-chapter]');
+  if (toggleChapter) {
+    const cid = toggleChapter.getAttribute('data-toggle-chapter');
+    expandedChapters[cid] = !expandedChapters[cid];
+    render();
+    return;
+  }
+
+  const markChapter = e.target.closest('[data-mark-chapter]');
+  if (markChapter) {
+    const cid = markChapter.getAttribute('data-mark-chapter');
+    const val = markChapter.getAttribute('data-mark-val') === '1';
+    const [uid, gPart] = cid.split('__g');
+    const gi = parseInt(gPart, 10);
+    const sub = getCurrentSubjects().find((s) => s.id === activeTab);
+    const unit = sub && sub.units.find((u) => u.id === uid);
+    const group = unit && unit.groups[gi];
+    if (group) {
+      group.topics.forEach((_, ti) => {
+        const tid = getTopicId(unit.id, gi, ti);
+        if (val) checkedMap[tid] = true;
+        else delete checkedMap[tid];
+      });
+      saveState();
+      render();
+      showToast(val ? `${group.name} marked complete` : `${group.name} unchecked`);
+      if (!currentUser && val && !promptDismissedThisSession) {
+        guestTickCount += 3;
+        openLoginPromptModal();
+      }
+    }
     return;
   }
 
@@ -2098,9 +3077,13 @@ document.getElementById('main-content').addEventListener('click', (e) => {
   if (e.target.closest('#btn-toggle-collapse')) {
     const sub = getCurrentSubjects().find((s) => s.id === activeTab);
     if (sub) {
-      const allCollapsed = sub.units.every((u) => collapsedUnits[u.id]);
-      sub.units.forEach((u) => {
-        collapsedUnits[u.id] = !allCollapsed;
+      const validUnits = sub.units.filter((u) => !u.missingNotice);
+      const allExpanded = validUnits.every((u) => !!expandedUnits[u.id]);
+      validUnits.forEach((u) => {
+        expandedUnits[u.id] = !allExpanded;
+        u.groups.forEach((_, gi) => {
+          expandedChapters[getChapterId(u.id, gi)] = !allExpanded;
+        });
       });
       render();
     }
@@ -2127,9 +3110,9 @@ document.getElementById('main-content').addEventListener('change', (e) => {
 });
 
 document.getElementById('btn-reset-all').addEventListener('click', () => {
-  const cfg = SYLLABUS_BY_YEAR[selectedYear] || SYLLABUS_BY_YEAR.year2;
+  const cfg = getCurrentYearConfig();
   openModal(
-    `Reset ${cfg.label} Progress?`,
+    `Reset ${cfg.semLabel} Progress?`,
     `This will uncheck every topic in ${cfg.semLabel}.`,
     () => {
       cfg.subjects.forEach((sub) => {
@@ -2143,7 +3126,7 @@ document.getElementById('btn-reset-all').addEventListener('click', () => {
       });
       saveState();
       render();
-      showToast(`${cfg.label} progress reset`);
+      showToast(`${cfg.semLabel} progress reset`);
     }
   );
 });
@@ -2189,7 +3172,7 @@ document.getElementById('account-modal').addEventListener('click', (e) => {
 
 document.getElementById('btn-change-year').addEventListener('click', () => {
   document.getElementById('account-modal').classList.remove('open');
-  document.getElementById('year-picker-modal').classList.add('open');
+  openCourseYearPickerModal();
 });
 
 document.getElementById('btn-sync-now').addEventListener('click', () => {
@@ -2227,13 +3210,19 @@ document.getElementById('admin-modal').addEventListener('click', (e) => {
 });
 
 document.getElementById('admin-year-containers').addEventListener('click', (e) => {
+  const courseToggle = e.target.closest('[data-admin-course-toggle]');
+  if (courseToggle) {
+    const cKey = courseToggle.getAttribute('data-admin-course-toggle');
+    const body = document.getElementById(`admin-course-box-${cKey}`);
+    if (body) body.classList.toggle('hidden');
+    return;
+  }
+
   const toggleBtn = e.target.closest('[data-admin-toggle]');
   if (toggleBtn) {
     const yrKey = toggleBtn.getAttribute('data-admin-toggle');
     const body = document.getElementById(`admin-box-${yrKey}`);
-    if (body) {
-      body.classList.toggle('hidden');
-    }
+    if (body) body.classList.toggle('hidden');
     return;
   }
 
@@ -2262,8 +3251,7 @@ setTimeout(() => {
   }
 }, 10000);
 
-
-const THEME_STORAGE_KEY = 'bca_theme_v1';
+const THEME_STORAGE_KEY = 'syllabus_theme_v1';
 
 function applyTheme(theme) {
   const isDark = theme === 'dark';
@@ -2277,7 +3265,7 @@ function applyTheme(theme) {
 function initTheme() {
   let theme = 'light';
   try {
-    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    const saved = localStorage.getItem(THEME_STORAGE_KEY) || localStorage.getItem('bca_theme_v1');
     if (saved === 'dark' || saved === 'light') {
       theme = saved;
     }
