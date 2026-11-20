@@ -1138,6 +1138,8 @@ let fbAuth = null;
 let fbDb = null;
 let currentUser = null;
 let unsubscribeSnapshot = null;
+let adminUsersCache = [];
+let adminDetailState = null;
 
 function getCurrentSubjects() {
   return (SYLLABUS_BY_YEAR[selectedYear] || SYLLABUS_BY_YEAR.year2).subjects;
@@ -1409,7 +1411,7 @@ function initFirebase() {
   }
 }
 
-function renderAdminUserCard(u, yr) {
+function renderAdminUserCard(u, yr, cacheIdx) {
   const name = escapeHtml(u.displayName || 'Student');
   const email = escapeHtml(u.email || '');
   const pct = yr === 'year1' ? (u.year1Pct ?? u.overallPct ?? 0) : (u.year2Pct ?? u.overallPct ?? 0);
@@ -1427,12 +1429,12 @@ function renderAdminUserCard(u, yr) {
         .join('')
     : '';
   return `
-    <div class="admin-user-card">
+    <div class="admin-user-card admin-user-card-clickable" data-admin-view-student="${cacheIdx}">
       <div class="admin-user-top">
         <div style="display:flex;align-items:center;gap:0.65rem;">
           ${avatarHtml}
           <div>
-            <div style="font-weight:700;font-size:0.92rem;color:#0f172a;">${name}</div>
+            <div style="font-weight:700;font-size:0.92rem;">${name}</div>
             <div style="font-size:0.75rem;color:#64748b;">${email} • Last active: ${escapeHtml(updated)}</div>
           </div>
         </div>
@@ -1445,7 +1447,102 @@ function renderAdminUserCard(u, yr) {
         <div class="progress-fill" style="width:${pct}%"></div>
       </div>
       ${pills ? `<div class="admin-sub-pills">${pills}</div>` : ''}
+      <div style="margin-top:0.45rem;text-align:right;font-size:0.72rem;font-weight:600;color:#4f46e5;">
+        Tap to view ticked topics →
+      </div>
     </div>
+  `;
+}
+
+function renderAdminStudentDetail(idx, filter) {
+  const container = document.getElementById('admin-year-containers');
+  const entry = adminUsersCache[idx];
+  if (!entry) return;
+  adminDetailState = { idx, filter };
+  const u = entry.user;
+  const yr = entry.yr;
+  const studentMap = u.checkedMap || {};
+  const cfg = SYLLABUS_BY_YEAR[yr] || SYLLABUS_BY_YEAR.year2;
+  const name = escapeHtml(u.displayName || 'Student');
+  const email = escapeHtml(u.email || '');
+  const pct = yr === 'year1' ? (u.year1Pct ?? u.overallPct ?? 0) : (u.year2Pct ?? u.overallPct ?? 0);
+  const done = yr === 'year1' ? (u.year1Done ?? u.doneCount ?? 0) : (u.year2Done ?? u.doneCount ?? 0);
+  const total = yr === 'year1' ? (u.year1Total ?? u.totalCount ?? 0) : (u.year2Total ?? u.totalCount ?? 0);
+  const initial = (u.displayName || u.email || 'S').trim().charAt(0).toUpperCase();
+  const avatarHtml = u.photoURL
+    ? `<img src="${escapeHtml(u.photoURL)}" class="avatar-img" alt="" />`
+    : `<span class="avatar-fallback">${escapeHtml(initial)}</span>`;
+
+  let subjectsHtml = '';
+  cfg.subjects.forEach((sub) => {
+    if (sub.missingNotice) return;
+    let subDone = 0;
+    let subTotal = 0;
+    let unitsHtml = '';
+    sub.units.forEach((unit) => {
+      if (unit.missingNotice) return;
+      let unitTopicsHtml = '';
+      unit.groups.forEach((g, gi) => {
+        g.topics.forEach((t, ti) => {
+          subTotal++;
+          const isTicked = !!studentMap[getTopicId(unit.id, gi, ti)];
+          if (isTicked) subDone++;
+          if (filter === 'completed' && !isTicked) return;
+          if (filter === 'pending' && isTicked) return;
+          unitTopicsHtml += `
+            <div class="admin-topic-item ${isTicked ? 'admin-topic-done' : 'admin-topic-pending'}">
+              <span>${isTicked ? '✅' : '⬜'}</span>
+              <span>${escapeHtml(t)}</span>
+            </div>
+          `;
+        });
+      });
+      if (unitTopicsHtml) {
+        unitsHtml += `
+          <div class="admin-detail-unit">
+            <div style="font-size:0.78rem;font-weight:700;margin-bottom:0.25rem;">${escapeHtml(unit.title)}</div>
+            ${unitTopicsHtml}
+          </div>
+        `;
+      }
+    });
+    const subPct = subTotal ? Math.round((subDone / subTotal) * 100) : 0;
+    subjectsHtml += `
+      <div class="admin-detail-sub">
+        <div class="admin-detail-sub-title">
+          <span>${escapeHtml(sub.name)}</span>
+          <span style="color:#4f46e5;">${subDone}/${subTotal} (${subPct}%)</span>
+        </div>
+        ${unitsHtml || '<div class="admin-detail-unit"><span class="unit-sub">No topics in this filter.</span></div>'}
+      </div>
+    `;
+  });
+
+  container.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.75rem;">
+      <button type="button" id="btn-admin-back" class="btn btn-outline">← Back to Students</button>
+      <div class="filter-group">
+        ${['all', 'completed', 'pending']
+          .map(
+            (f) => `<button type="button" data-admin-detail-filter="${f}" class="filter-btn ${filter === f ? 'active' : ''}">${f}</button>`
+          )
+          .join('')}
+      </div>
+    </div>
+    <div class="admin-detail-head">
+      <div style="display:flex;align-items:center;gap:0.65rem;">
+        ${avatarHtml}
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;">${name}</div>
+          <div style="font-size:0.75rem;color:#64748b;">${email} • ${escapeHtml(cfg.semLabel)}</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-weight:700;font-size:1.05rem;color:#4f46e5;">${pct}%</div>
+        <div style="font-size:0.75rem;color:#64748b;">${done}/${total} topics done</div>
+      </div>
+    </div>
+    ${subjectsHtml}
   `;
 }
 
@@ -1461,22 +1558,27 @@ function loadAdminDashboard() {
     .orderBy('updatedAt', 'desc')
     .get()
     .then((snap) => {
+      adminUsersCache = [];
+      adminDetailState = null;
       const y1Users = [];
       const y2Users = [];
       snap.forEach((doc) => {
         const d = doc.data();
-        if (d.selectedYear === 'year1') {
-          y1Users.push(d);
+        const yr = d.selectedYear === 'year1' ? 'year1' : 'year2';
+        const idx = adminUsersCache.length;
+        adminUsersCache.push({ user: d, yr });
+        if (yr === 'year1') {
+          y1Users.push({ user: d, idx });
         } else {
-          y2Users.push(d);
+          y2Users.push({ user: d, idx });
         }
       });
 
       const y1Avg = y1Users.length
-        ? Math.round(y1Users.reduce((acc, u) => acc + (u.year1Pct ?? u.overallPct ?? 0), 0) / y1Users.length)
+        ? Math.round(y1Users.reduce((acc, item) => acc + (item.user.year1Pct ?? item.user.overallPct ?? 0), 0) / y1Users.length)
         : 0;
       const y2Avg = y2Users.length
-        ? Math.round(y2Users.reduce((acc, u) => acc + (u.year2Pct ?? u.overallPct ?? 0), 0) / y2Users.length)
+        ? Math.round(y2Users.reduce((acc, item) => acc + (item.user.year2Pct ?? item.user.overallPct ?? 0), 0) / y2Users.length)
         : 0;
 
       const buildYearBox = (yrKey, title, subtitle, list, avgPct) => `
@@ -1491,7 +1593,7 @@ function loadAdminDashboard() {
           <div id="admin-box-${yrKey}" class="admin-year-body hidden">
             ${
               list.length
-                ? list.map((u) => renderAdminUserCard(u, yrKey)).join('')
+                ? list.map((item) => renderAdminUserCard(item.user, yrKey, item.idx)).join('')
                 : '<p class="unit-sub">No students have signed in for this year yet.</p>'
             }
           </div>
@@ -2115,11 +2217,30 @@ document.getElementById('admin-modal').addEventListener('click', (e) => {
 
 document.getElementById('admin-year-containers').addEventListener('click', (e) => {
   const toggleBtn = e.target.closest('[data-admin-toggle]');
-  if (!toggleBtn) return;
-  const yrKey = toggleBtn.getAttribute('data-admin-toggle');
-  const body = document.getElementById(`admin-box-${yrKey}`);
-  if (body) {
-    body.classList.toggle('hidden');
+  if (toggleBtn) {
+    const yrKey = toggleBtn.getAttribute('data-admin-toggle');
+    const body = document.getElementById(`admin-box-${yrKey}`);
+    if (body) {
+      body.classList.toggle('hidden');
+    }
+    return;
+  }
+
+  const viewStudent = e.target.closest('[data-admin-view-student]');
+  if (viewStudent) {
+    const idx = parseInt(viewStudent.getAttribute('data-admin-view-student'), 10);
+    renderAdminStudentDetail(idx, 'all');
+    return;
+  }
+
+  if (e.target.closest('#btn-admin-back')) {
+    loadAdminDashboard();
+    return;
+  }
+
+  const filterBtn = e.target.closest('[data-admin-detail-filter]');
+  if (filterBtn && adminDetailState) {
+    renderAdminStudentDetail(adminDetailState.idx, filterBtn.getAttribute('data-admin-detail-filter'));
   }
 });
 
