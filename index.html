@@ -171,8 +171,8 @@
     <div class="modal-box modal-box-wide">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
         <div>
-          <h2 class="modal-title">Admin Dashboard — Student Progress</h2>
-          <p class="modal-desc">Tap a course, then tap a year to view students.</p>
+          <h2 class="modal-title">Admin Dashboard</h2>
+          <p class="modal-desc">Track student progress or browse all listed syllabi.</p>
         </div>
         <div style="display:flex;gap:0.5rem;">
           <button id="btn-admin-refresh" type="button" class="btn btn-outline">Refresh</button>
@@ -180,6 +180,10 @@
         </div>
       </div>
 
+      <div id="admin-mode-tabs" class="filter-group" style="margin-top:0.85rem;">
+        <button type="button" data-admin-mode="students" class="filter-btn active">Students Progress</button>
+        <button type="button" data-admin-mode="syllabus" class="filter-btn">All Listed Syllabus</button>
+      </div>
       <div id="admin-year-containers" style="margin-top:0.75rem;"></div>
     </div>
   </div>

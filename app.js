@@ -1,7 +1,7 @@
 const ADMIN_ACCESS = {
-  'ashutoshaamonty@gmail.com': '*',
-  'tideseren@gmail.com': '*',
-  'ankitayo2005@gmail.com': ['ashutoshaamonty@gmail.com']
+  'ashutoshaamonty@gmail.com': { scope: '*', canViewAllSyllabus: true },
+  'tideseren@gmail.com': { scope: '*', canViewAllSyllabus: true },
+  'ankitayo2005@gmail.com': { scope: ['ashutoshaamonty@gmail.com'], canViewAllSyllabus: false }
 };
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCjK6hvr-faQTcV5mRA1QTkZw8LoZyO2bU",
@@ -1885,6 +1885,7 @@ let currentUser = null;
 let unsubscribeSnapshot = null;
 let adminUsersCache = [];
 let adminDetailState = null;
+let adminDashboardMode = 'students';
 
 function normalizeCourseYear(course, year) {
   if (year === 'year1') return { course: 'bca', year: 'bca_y1' };
@@ -1915,7 +1916,7 @@ function getCurrentSubjects() {
   return getCurrentYearConfig().subjects;
 }
 
-function getAdminScope(user) {
+function getAdminConfig(user) {
   if (!user || !user.email) return null;
   const email = user.email.toLowerCase();
   for (const [k, v] of Object.entries(ADMIN_ACCESS)) {
@@ -1924,8 +1925,18 @@ function getAdminScope(user) {
   return null;
 }
 
+function getAdminScope(user) {
+  const cfg = getAdminConfig(user);
+  return cfg ? cfg.scope : null;
+}
+
 function isAdminUser(user) {
-  return getAdminScope(user) !== null;
+  return getAdminConfig(user) !== null;
+}
+
+function canAdminViewAllSyllabus(user) {
+  const cfg = getAdminConfig(user);
+  return !!(cfg && cfg.canViewAllSyllabus);
 }
 
 function getTimeGreeting() {
@@ -1991,7 +2002,7 @@ function updateYearUI() {
 
   const wrap = document.getElementById('year-selector-wrap');
   if (wrap) {
-    if (currentUser && !isAdminUser(currentUser)) {
+    if (currentUser) {
       wrap.classList.add('hidden');
     } else {
       wrap.classList.remove('hidden');
@@ -2405,7 +2416,129 @@ function renderAdminStudentDetail(idx, filter) {
   `;
 }
 
+
+function updateAdminModeTabs() {
+  const tabsEl = document.getElementById('admin-mode-tabs');
+  const descEl = document.querySelector('#admin-modal .modal-desc');
+  const allowSyl = canAdminViewAllSyllabus(currentUser);
+  if (!allowSyl) {
+    adminDashboardMode = 'students';
+    if (tabsEl) tabsEl.classList.add('hidden');
+    if (descEl) descEl.textContent = 'Viewing shared student progress.';
+  } else {
+    if (tabsEl) tabsEl.classList.remove('hidden');
+    if (descEl) descEl.textContent = 'Track student progress or browse all listed syllabi.';
+  }
+  document.querySelectorAll('[data-admin-mode]').forEach((btn) => {
+    btn.classList.toggle('active', btn.getAttribute('data-admin-mode') === adminDashboardMode);
+  });
+}
+
+function renderAdminAllSyllabus() {
+  const container = document.getElementById('admin-year-containers');
+  updateAdminModeTabs();
+  if (!canAdminViewAllSyllabus(currentUser)) {
+    container.innerHTML = '<p class="sync-error">Access denied.</p>';
+    return;
+  }
+
+  let html = '';
+  Object.entries(COURSES).forEach(([cKey, cCfg]) => {
+    const yearKeys = Object.keys(cCfg.years);
+    const yearsHtml = yearKeys
+      .map((yKey) => {
+        const yCfg = cCfg.years[yKey];
+        const subjectsHtml = yCfg.subjects
+          .map((sub) => {
+            if (sub.missingNotice) {
+              return `
+                <div class="admin-detail-sub" style="margin-top:0.5rem;">
+                  <div class="admin-detail-sub-title">
+                    <span>${escapeHtml(sub.name)} (${escapeHtml(sub.code)})</span>
+                    <span class="pill-warn">Pending</span>
+                  </div>
+                </div>
+              `;
+            }
+            const unitsHtml = sub.units
+              .map((u) => {
+                if (u.missingNotice) {
+                  return `<div class="admin-detail-unit"><strong>${escapeHtml(u.title)}</strong> — <span style="color:#b45309;">Pending</span></div>`;
+                }
+                const chapsHtml = u.groups
+                  .map(
+                    (g) => `
+                    <div style="margin-top:0.3rem;padding-left:0.5rem;">
+                      <div style="font-size:0.75rem;font-weight:700;color:#4f46e5;">${escapeHtml(g.name)} (${g.topics.length} topics)</div>
+                      <ul style="margin:0.2rem 0 0.35rem 1.1rem;padding:0;font-size:0.75rem;color:#64748b;">
+                        ${g.topics.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}
+                      </ul>
+                    </div>
+                  `
+                  )
+                  .join('');
+                return `
+                  <div class="admin-detail-unit">
+                    <div style="font-size:0.78rem;font-weight:700;">${escapeHtml(u.title)}</div>
+                    ${chapsHtml}
+                  </div>
+                `;
+              })
+              .join('');
+            return `
+              <div class="admin-detail-sub" style="margin-top:0.5rem;">
+                <div class="admin-detail-sub-title">
+                  <span>${escapeHtml(sub.name)} (${escapeHtml(sub.code)})</span>
+                  <span style="font-size:0.75rem;color:#64748b;">${sub.units.length} units</span>
+                </div>
+                ${unitsHtml}
+              </div>
+            `;
+          })
+          .join('');
+
+        return `
+          <div class="admin-year-box">
+            <button type="button" data-admin-syl-year="${yKey}" class="admin-year-header">
+              <div>
+                <div style="font-weight:700;font-size:0.92rem;">${escapeHtml(cCfg.name)} ${escapeHtml(yCfg.shortLabel)}</div>
+                <div style="font-size:0.75rem;color:#64748b;">${escapeHtml(yCfg.semLabel)} • ${yCfg.subjects.length} subjects</div>
+              </div>
+              <span style="font-size:0.76rem;font-weight:600;color:#4f46e5;">View Subjects ▾</span>
+            </button>
+            <div id="admin-syl-box-${yKey}" class="admin-year-body hidden">
+              ${subjectsHtml}
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+
+    html += `
+      <div class="admin-course-box">
+        <button type="button" data-admin-syl-course="${cKey}" class="admin-course-header">
+          <div>
+            <div style="font-weight:700;font-size:1rem;">${escapeHtml(cCfg.name)} — ${escapeHtml(cCfg.fullName)}</div>
+            <div style="font-size:0.78rem;color:#64748b;margin-top:0.15rem;">${yearKeys.length} ${yearKeys.length === 1 ? 'year' : 'years'} listed</div>
+          </div>
+          <span style="font-size:0.8rem;font-weight:600;color:#4f46e5;">Open Years ▾</span>
+        </button>
+        <div id="admin-syl-course-${cKey}" class="admin-course-body hidden">
+          ${yearsHtml}
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
 function loadAdminDashboard() {
+  updateAdminModeTabs();
+  if (adminDashboardMode === 'syllabus') {
+    renderAdminAllSyllabus();
+    return;
+  }
   const container = document.getElementById('admin-year-containers');
   if (!isAdminUser(currentUser) || !fbDb) {
     container.innerHTML = '<p class="sync-error">Access denied.</p>';
@@ -2494,6 +2627,12 @@ function loadAdminDashboard() {
         `;
       };
 
+      if (scope !== '*') {
+        container.innerHTML = adminUsersCache.length
+          ? adminUsersCache.map((entry, idx) => renderAdminUserCard(entry.user, entry.yr, idx)).join('')
+          : '<p class="unit-sub">No progress data found yet.</p>';
+        return;
+      }
       container.innerHTML = buildCourseBox('bca') + buildCourseBox('bcom');
     })
     .catch((err) => {
@@ -3191,7 +3330,15 @@ document.getElementById('btn-sync-signout').addEventListener('click', () => {
 
 // Admin Dashboard Events
 document.getElementById('btn-admin-panel').addEventListener('click', () => {
+  adminDashboardMode = 'students';
   document.getElementById('admin-modal').classList.add('open');
+  loadAdminDashboard();
+});
+
+document.getElementById('admin-mode-tabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-admin-mode]');
+  if (!btn) return;
+  adminDashboardMode = btn.getAttribute('data-admin-mode');
   loadAdminDashboard();
 });
 
@@ -3210,6 +3357,22 @@ document.getElementById('admin-modal').addEventListener('click', (e) => {
 });
 
 document.getElementById('admin-year-containers').addEventListener('click', (e) => {
+  const sylCourseToggle = e.target.closest('[data-admin-syl-course]');
+  if (sylCourseToggle) {
+    const cKey = sylCourseToggle.getAttribute('data-admin-syl-course');
+    const body = document.getElementById(`admin-syl-course-${cKey}`);
+    if (body) body.classList.toggle('hidden');
+    return;
+  }
+
+  const sylYearToggle = e.target.closest('[data-admin-syl-year]');
+  if (sylYearToggle) {
+    const yKey = sylYearToggle.getAttribute('data-admin-syl-year');
+    const body = document.getElementById(`admin-syl-box-${yKey}`);
+    if (body) body.classList.toggle('hidden');
+    return;
+  }
+
   const courseToggle = e.target.closest('[data-admin-course-toggle]');
   if (courseToggle) {
     const cKey = courseToggle.getAttribute('data-admin-course-toggle');
