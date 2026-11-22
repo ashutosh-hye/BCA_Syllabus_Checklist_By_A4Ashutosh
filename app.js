@@ -2274,7 +2274,24 @@ function openCourseYearPickerModal() {
   document.getElementById('year-picker-modal').classList.add('open');
 }
 
+const GEMINI_KEY_STORAGE = 'admin_gemini_api_key_v1';
+let cachedAdminGeminiKey = '';
+try { cachedAdminGeminiKey = localStorage.getItem(GEMINI_KEY_STORAGE) || ''; } catch (e) {}
+
+function loadAdminSecretsIfAllowed(user) {
+  if (!fbDb || !canAdminAddSyllabus(user)) return;
+  fbDb.collection('admin_config').doc('secrets').get()
+    .then((doc) => {
+      if (doc.exists && doc.data() && doc.data().geminiApiKey) {
+        cachedAdminGeminiKey = doc.data().geminiApiKey;
+        try { localStorage.setItem(GEMINI_KEY_STORAGE, cachedAdminGeminiKey); } catch (e) {}
+      }
+    })
+    .catch(() => {});
+}
+
 function startCloudListener(user) {
+  loadAdminSecretsIfAllowed(user);
   if (unsubscribeSnapshot) {
     unsubscribeSnapshot();
     unsubscribeSnapshot = null;
@@ -2679,20 +2696,28 @@ function parsePlainTextSyllabus(rawText, defaultSubjectName) {
     curUnit.groups.push(curGroup);
   };
 
-  lines.forEach((line) => {
+  for (const line of lines) {
+    if (/^(suggested\s+readings?|references?|bibliography|recommended\s+books?|text\s+books?)\b/i.test(line)) {
+      break;
+    }
+    if (/^\d{1,3}$/.test(line)) continue;
+    if (/^\(?(?:equal\s+to\s+)?\d+\s+lectures?\)?$/i.test(line)) continue;
+
     if (/^(unit|module)\b/i.test(line)) {
       ensureUnit(line);
     } else if (/^(lesson|chapter|topic group)\b/i.test(line)) {
       ensureGroup(line);
     } else if (!curUnit) {
-      if (!detectedSubject) detectedSubject = line;
+      if (!/^(department\s+of|university\s+of|faculty\s+of|\()/i.test(line) && !detectedSubject) {
+        detectedSubject = line;
+      }
     } else {
-      const clean = line.replace(/^[-*•\u2022]\s*/, '').replace(/^\[\s*\]\s*/, '');
-      if (!clean) return;
+      const clean = line.replace(/^[-*•\u2022\uf0b7]\s*/, '').replace(/^\[\s*\]\s*/, '').trim();
+      if (!clean) continue;
       if (!curGroup) ensureGroup('Topics');
       curGroup.topics.push(clean);
     }
-  });
+  }
 
   if (!units.length && detectedSubject) {
     ensureUnit('Unit I');
@@ -2712,6 +2737,56 @@ function parsePlainTextSyllabus(rawText, defaultSubjectName) {
       units
     }
   ];
+}
+
+async function parseWithGeminiApi(apiKey, rawText) {
+  const prompt = `Extract the syllabus from the following text. Ignore Suggested Readings, References, Bibliography, Glossaries, and Practice Questions.
+Return ONLY valid JSON matching this schema:
+{
+  "courseName": "Detected course name (e.g. BCA, DU B.Com, BBA, or empty string if not mentioned)",
+  "yearLabel": "Detected year/semester (e.g. 1st Year (Semester I), or empty string if not mentioned)",
+  "subjects": [
+    {
+      "id": "unique_short_id",
+      "shortName": "Short Name (max 20 chars)",
+      "name": "1. Full Subject Name",
+      "code": "Subject Code or CORE",
+      "category": "Credits or Category",
+      "units": [
+        {
+          "id": "unique_unit_id",
+          "title": "Unit 1 — Unit Title",
+          "groups": [
+            {
+              "name": "Lesson / Chapter / Topics",
+              "topics": ["Subtopic 1", "Subtopic 2"]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+Text:\n${rawText.slice(0, 120000)}`;
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: 'application/json' }
+      })
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err.error && err.error.message) || `Gemini API error (${res.status})`);
+  }
+  const data = await res.json();
+  const txt = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+  return JSON.parse(txt);
 }
 
 async function extractPdfTextClient(file) {
@@ -2964,14 +3039,33 @@ function renderAdminAddSyllabus() {
 
   container.innerHTML = `
     <div class="add-syl-card">
-      <div style="font-weight:700;font-size:0.95rem;">Step 1: Upload Syllabus PDF</div>
-      <div style="margin-top:0.5rem;">
-        <label class="add-syl-label">Subject Name (optional — auto-detected from PDF if blank)</label>
-        <input id="add-subject-name" class="add-syl-input" placeholder="e.g. Principles of Management" />
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+        <div style="font-weight:700;font-size:0.95rem;">Step 1: Upload Syllabus PDF</div>
+        <button type="button" id="btn-toggle-key-box" class="btn btn-muted" style="padding:0.22rem 0.55rem;font-size:0.72rem;">
+          ${cachedAdminGeminiKey ? '🔑 AI Key Saved' : '🔑 Set Gemini Key'}
+        </button>
       </div>
-      <div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.6rem;align-items:center;">
+      <div id="admin-key-box" class="hidden" style="margin-top:0.55rem;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+        <label class="add-syl-label">Gemini API Key (saved privately in your Admin account, never shown publicly)</label>
+        <div style="display:flex;gap:0.4rem;">
+          <input id="add-gemini-key" type="password" class="add-syl-input" value="${escapeHtml(cachedAdminGeminiKey)}" placeholder="Paste key once from aistudio.google.com" />
+          <button type="button" id="btn-save-gemini-key" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+      <div style="margin-top:0.55rem;">
+        <label class="add-syl-label">Subject Name (optional — auto-detected from PDF if blank)</label>
+        <input id="add-subject-name" class="add-syl-input" placeholder="e.g. Environmental Studies" />
+      </div>
+      <div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;">
         <input id="add-pdf-file" type="file" accept="application/pdf" style="font-size:0.8rem;" />
-        <button type="button" id="btn-read-pdf-free" class="btn btn-primary">Read &amp; Preview PDF</button>
+        <button type="button" id="btn-read-pdf-free" class="btn btn-outline"
+          title="Instant local scan — best for clean, well-defined syllabus PDFs (less accurate on messy PDFs)">
+          Auto-Detect (Free)
+        </button>
+        <button type="button" id="btn-read-pdf-ai" class="btn btn-primary"
+          title="Smart Gemini AI scan — best for messy, complex, or book-style PDFs (removes references &amp; extracts clean units/topics)">
+          Gemini AI Detect
+        </button>
       </div>
       <div id="add-parse-status" class="unit-sub" style="margin-top:0.5rem;"></div>
     </div>
@@ -3938,6 +4032,64 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
       renderAdminAddSyllabus();
       showToast('Custom course deleted');
     }).catch((err) => showToast(err.message || 'Delete failed'));
+    return;
+  }
+
+  if (e.target.closest('#btn-toggle-key-box')) {
+    const kb = document.getElementById('admin-key-box');
+    if (kb) kb.classList.toggle('hidden');
+    return;
+  }
+
+  if (e.target.closest('#btn-save-gemini-key')) {
+    const keyInput = document.getElementById('add-gemini-key');
+    const statusEl = document.getElementById('add-parse-status');
+    const k = keyInput ? keyInput.value.trim() : '';
+    if (!k) { statusEl.textContent = 'Pehle Gemini API key paste karo.'; return; }
+    cachedAdminGeminiKey = k;
+    try { localStorage.setItem(GEMINI_KEY_STORAGE, k); } catch (err) {}
+    if (fbDb && canAdminAddSyllabus(currentUser)) {
+      fbDb.collection('admin_config').doc('secrets').set({ geminiApiKey: k, updatedAt: new Date().toISOString() }, { merge: true })
+        .then(() => {
+          document.getElementById('admin-key-box')?.classList.add('hidden');
+          document.getElementById('btn-toggle-key-box').textContent = '🔑 AI Key Saved';
+          statusEl.textContent = 'Gemini API Key securely saved! Ab seedha "Gemini AI Detect" use kar sakte ho.';
+          showToast('API Key saved!');
+        })
+        .catch(() => {
+          document.getElementById('admin-key-box')?.classList.add('hidden');
+          statusEl.textContent = 'API Key saved in this browser!';
+        });
+    }
+    return;
+  }
+
+  if (e.target.closest('#btn-read-pdf-ai')) {
+    const fileInput = document.getElementById('add-pdf-file');
+    const statusEl = document.getElementById('add-parse-status');
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    if (!file) { statusEl.textContent = 'Pehle ek PDF file select karo.'; return; }
+    const apiKey = (document.getElementById('add-gemini-key')?.value || '').trim() || cachedAdminGeminiKey;
+    if (!apiKey) {
+      document.getElementById('admin-key-box')?.classList.remove('hidden');
+      statusEl.textContent = 'Pehle upar "Set Gemini Key" me apni key daal kar Save karo.';
+      return;
+    }
+    statusEl.textContent = 'Gemini AI se PDF samjhi ja rahi hai...';
+    extractPdfTextClient(file)
+      .then((txt) => parseWithGeminiApi(apiKey, txt))
+      .then((res) => {
+        const subs = Array.isArray(res) ? res : (res.subjects || []);
+        if (!subs.length) throw new Error('Gemini AI ko is PDF me subjects nahi mile.');
+        pendingParsedSubjects = subs;
+        pendingDetectedMeta = {
+          courseName: (!Array.isArray(res) && res.courseName) || '',
+          yearLabel: (!Array.isArray(res) && res.yearLabel) || ''
+        };
+        renderAdminAddSyllabus();
+        document.getElementById('add-parse-status').textContent = `AI Ready! ${subs.length} subject(s) cleanly extract ho gaya.`;
+      })
+      .catch((err) => { statusEl.textContent = err.message || 'AI parse failed.'; });
     return;
   }
 
