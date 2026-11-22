@@ -1900,6 +1900,8 @@ let unsubscribeSnapshot = null;
 let adminUsersCache = [];
 let adminDetailState = null;
 let adminDashboardMode = 'students';
+let previewDraftState = null;
+let editingCourseMeta = null;
 
 function normalizeCourseYear(course, year) {
   if (year === 'year1') return { course: 'bca', year: 'bca_y1' };
@@ -1917,13 +1919,43 @@ function normalizeCourseYear(course, year) {
   return { course: 'bca', year: 'bca_y2' };
 }
 
+
+function isYearVisibleToUser(yearObj) {
+  if (!yearObj) return false;
+  if (yearObj.isDraft && !previewDraftState) return false;
+  if (yearObj.isDraft && previewDraftState && previewDraftState.yearId !== yearObj.id) return false;
+  return true;
+}
+
+function getVisibleCourses() {
+  const out = {};
+  Object.entries(COURSES).forEach(([cId, cObj]) => {
+    const visibleYears = {};
+    Object.entries(cObj.years || {}).forEach(([yId, yObj]) => {
+      if (isYearVisibleToUser(yObj)) visibleYears[yId] = yObj;
+    });
+    if (Object.keys(visibleYears).length > 0) {
+      out[cId] = { ...cObj, years: visibleYears };
+    }
+  });
+  return out;
+}
+
 function getCurrentCourseConfig() {
-  return COURSES[selectedCourse] || COURSES.bca;
+  if (previewDraftState && COURSES[previewDraftState.courseId]) {
+    return COURSES[previewDraftState.courseId];
+  }
+  const vis = getVisibleCourses();
+  return vis[selectedCourse] || vis.bca || COURSES.bca;
 }
 
 function getCurrentYearConfig() {
   const c = getCurrentCourseConfig();
-  return c.years[selectedYear] || c.years[c.defaultYear];
+  if (previewDraftState && c.years[previewDraftState.yearId]) {
+    return c.years[previewDraftState.yearId];
+  }
+  const firstKey = Object.keys(c.years)[0];
+  return c.years[selectedYear] || c.years[c.defaultYear] || c.years[firstKey];
 }
 
 function getCurrentSubjects() {
@@ -1999,14 +2031,15 @@ function renderModalYearChoices() {
   const container = document.getElementById('modal-year-choices');
   const modalCourseBar = document.getElementById('modal-course-bar');
   if (modalCourseBar) {
-    modalCourseBar.innerHTML = Object.values(COURSES)
+    modalCourseBar.innerHTML = Object.values(getVisibleCourses())
       .map(
         (cObj) => `<button type="button" data-modal-course="${escapeHtml(cObj.id)}" class="year-pill ${cObj.id === modalCourse ? 'active' : ''}">${escapeHtml(cObj.fullName || cObj.name)}</button>`
       )
       .join('');
   }
   if (!container) return;
-  const c = COURSES[modalCourse] || COURSES.bca;
+  const visC = getVisibleCourses();
+  const c = visC[modalCourse] || visC.bca || Object.values(visC)[0];
   container.innerHTML = Object.values(c.years)
     .map(
       (y) => `
@@ -2020,6 +2053,22 @@ function renderModalYearChoices() {
 }
 
 function updateYearUI() {
+  const banner = document.getElementById('preview-banner');
+  const bannerTxt = document.getElementById('preview-banner-text');
+  const pubBtn = document.getElementById('btn-preview-publish');
+  if (banner) {
+    if (previewDraftState && canAdminAddSyllabus(currentUser)) {
+      const pCourse = COURSES[previewDraftState.courseId];
+      const pYear = pCourse && pCourse.years[previewDraftState.yearId];
+      banner.classList.remove('hidden');
+      if (bannerTxt && pYear) {
+        bannerTxt.innerHTML = `<strong>Preview Mode:</strong> ${escapeHtml(pYear.semLabel)} ${pYear.isDraft ? '(Draft — Only visible to you)' : '(Live)'}`;
+      }
+      if (pubBtn) pubBtn.classList.toggle('hidden', !(pYear && pYear.isDraft));
+    } else {
+      banner.classList.add('hidden');
+    }
+  }
   const cfg = getCurrentYearConfig();
   const badge = document.getElementById('header-sem-badge');
   if (badge) badge.textContent = cfg.semLabel;
@@ -2035,7 +2084,7 @@ function updateYearUI() {
 
   const courseBar = document.getElementById('course-bar');
   if (courseBar) {
-    courseBar.innerHTML = Object.values(COURSES)
+    courseBar.innerHTML = Object.values(getVisibleCourses())
       .map(
         (cObj) => `<button type="button" data-select-course="${escapeHtml(cObj.id)}" class="year-pill ${cObj.id === selectedCourse ? 'active' : ''}">${escapeHtml(cObj.fullName || cObj.name)}</button>`
       )
@@ -2720,6 +2769,42 @@ Text:\n${rawText.slice(0, 120000)}`;
   return JSON.parse(txt);
 }
 
+let pendingParsedSubjects = null;
+
+function renderVisualPreviewHtml(subjects) {
+  if (!subjects || !subjects.length) return '';
+  return subjects
+    .map((sub) => {
+      const unitsHtml = (sub.units || [])
+        .map((u) => {
+          const chapsHtml = (u.groups || [])
+            .map(
+              (g) => `
+              <div style="margin-top:0.25rem;padding-left:0.5rem;">
+                <div style="font-size:0.76rem;font-weight:700;color:#4f46e5;">${escapeHtml(g.name)} (${(g.topics || []).length})</div>
+                <div style="font-size:0.74rem;color:#64748b;">${(g.topics || []).slice(0, 4).map(escapeHtml).join(' • ')}${(g.topics || []).length > 4 ? ' ...' : ''}</div>
+              </div>
+            `
+            )
+            .join('');
+          return `
+            <div style="margin-top:0.35rem;padding-top:0.35rem;border-top:1px dashed #cbd5e1;">
+              <div style="font-size:0.8rem;font-weight:700;">${escapeHtml(u.title)}</div>
+              ${chapsHtml}
+            </div>
+          `;
+        })
+        .join('');
+      return `
+        <div class="admin-user-card" style="margin-top:0.5rem;">
+          <div style="font-weight:700;font-size:0.9rem;">${escapeHtml(sub.name)} <span class="pill-code">${escapeHtml(sub.code || '')}</span></div>
+          ${unitsHtml}
+        </div>
+      `;
+    })
+    .join('');
+}
+
 function renderAdminAddSyllabus() {
   const container = document.getElementById('admin-year-containers');
   updateAdminModeTabs();
@@ -2733,75 +2818,95 @@ function renderAdminAddSyllabus() {
     savedKey = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
   } catch (e) {}
 
+  const preCourseName = editingCourseMeta ? editingCourseMeta.courseName : '';
+  const preYearLabel = editingCourseMeta ? editingCourseMeta.yearLabel : '';
+
   const customCoursesHtml = Object.values(COURSES)
     .filter((c) => c.isCustom)
-    .map(
-      (c) => `
-      <div class="admin-user-card" style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
-        <div>
-          <strong>${escapeHtml(c.fullName || c.name)}</strong>
-          <div class="unit-sub">${Object.keys(c.years).length} year(s) • ID: ${escapeHtml(c.id)}</div>
+    .map((c) => {
+      const yearsRows = Object.values(c.years || {})
+        .map(
+          (y) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;padding:0.45rem 0;border-top:1px dashed #cbd5e1;">
+            <div>
+              <span style="font-weight:600;font-size:0.84rem;">${escapeHtml(y.label)}</span>
+              <span class="${y.isDraft ? 'pill-warn' : 'pill-cat'}" style="margin-left:0.35rem;font-size:0.7rem;">
+                ${y.isDraft ? 'Draft (Only You)' : 'Live (Public)'}
+              </span>
+              <div class="unit-sub">${(y.subjects || []).length} subjects</div>
+            </div>
+            <div style="display:flex;gap:0.35rem;flex-wrap:wrap;">
+              <button type="button" data-preview-course="${escapeHtml(c.id)}" data-preview-year="${escapeHtml(y.id)}" class="btn btn-outline">Preview</button>
+              <button type="button" data-edit-course="${escapeHtml(c.id)}" data-edit-year="${escapeHtml(y.id)}" class="btn btn-outline">Edit</button>
+              <button type="button" data-toggle-publish-course="${escapeHtml(c.id)}" data-toggle-publish-year="${escapeHtml(y.id)}" class="btn ${y.isDraft ? 'btn-primary' : 'btn-muted'}">${y.isDraft ? 'Publish' : 'Hide'}</button>
+              <button type="button" data-delete-custom-year="${escapeHtml(c.id)}" data-year-id="${escapeHtml(y.id)}" class="btn btn-danger-soft">Delete</button>
+            </div>
+          </div>
+        `
+        )
+        .join('');
+      return `
+        <div class="admin-user-card" style="margin-top:0.5rem;">
+          <div style="font-weight:700;font-size:0.92rem;margin-bottom:0.35rem;">${escapeHtml(c.fullName || c.name)}</div>
+          ${yearsRows}
         </div>
-        <button type="button" data-delete-custom-course="${escapeHtml(c.id)}" class="btn btn-danger-soft">Delete</button>
-      </div>
-    `
-    )
+      `;
+    })
     .join('');
 
   container.innerHTML = `
     <div class="add-syl-card">
-      <div style="font-weight:700;font-size:0.95rem;">1. Course &amp; Year Details</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+        <div style="font-weight:700;font-size:0.95rem;">${editingCourseMeta ? 'Editing Syllabus' : 'Step 1: Course &amp; Year'}</div>
+        ${editingCourseMeta ? '<button type="button" id="btn-cancel-edit-syl" class="btn btn-muted" style="padding:0.25rem 0.6rem;font-size:0.75rem;">Cancel Edit</button>' : ''}
+      </div>
       <div class="add-syl-grid">
         <div>
-          <label class="add-syl-label">Course ID (lowercase, no spaces)</label>
-          <input id="add-course-id" class="add-syl-input" placeholder="e.g. rmlau_bcom" />
+          <label class="add-syl-label">Course Name</label>
+          <input id="add-course-name" class="add-syl-input" value="${escapeHtml(preCourseName)}" placeholder="e.g. RMLAU B.Com" />
         </div>
         <div>
-          <label class="add-syl-label">Course Name (shown on button)</label>
-          <input id="add-course-name" class="add-syl-input" placeholder="e.g. RMLAU B.Com" />
-        </div>
-        <div>
-          <label class="add-syl-label">Year ID (lowercase, no spaces)</label>
-          <input id="add-year-id" class="add-syl-input" placeholder="e.g. rmlau_bcom_y1" />
-        </div>
-        <div>
-          <label class="add-syl-label">Year &amp; Semester Label</label>
-          <input id="add-year-label" class="add-syl-input" placeholder="e.g. 1st Year (Semester I)" />
+          <label class="add-syl-label">Year &amp; Semester</label>
+          <input id="add-year-label" class="add-syl-input" value="${escapeHtml(preYearLabel)}" placeholder="e.g. 1st Year (Semester I)" />
         </div>
       </div>
     </div>
 
     <div class="add-syl-card">
-      <div style="font-weight:700;font-size:0.95rem;">2. Upload PDF or Paste Syllabus</div>
+      <div style="font-weight:700;font-size:0.95rem;">Step 2: Upload Syllabus PDF</div>
       <div class="add-syl-grid" style="margin-top:0.5rem;">
         <div>
-          <label class="add-syl-label">Subject Name (for plain-text/PDF auto-parse)</label>
-          <input id="add-subject-name" class="add-syl-input" placeholder="e.g. 1. Financial Accounting" />
+          <label class="add-syl-label">Subject Name (only if PDF doesn't list it)</label>
+          <input id="add-subject-name" class="add-syl-input" placeholder="e.g. Financial Accounting" />
         </div>
         <div>
-          <label class="add-syl-label">Optional Gemini API Key (saved only in your browser)</label>
-          <input id="add-gemini-key" type="password" class="add-syl-input" value="${escapeHtml(savedKey)}" placeholder="AIza... (optional for messy PDFs)" />
+          <label class="add-syl-label">Gemini API Key (saved once in browser — for smart AI reading)</label>
+          <input id="add-gemini-key" type="password" class="add-syl-input" value="${escapeHtml(savedKey)}" placeholder="Paste free key from aistudio.google.com" />
         </div>
       </div>
-      <div style="margin-top:0.65rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;">
-        <input id="add-pdf-file" type="file" accept="application/pdf" style="font-size:0.78rem;" />
-        <button type="button" id="btn-parse-pdf-auto" class="btn btn-outline">Auto-Parse PDF</button>
-        <button type="button" id="btn-parse-pdf-ai" class="btn btn-primary">AI Parse PDF (Gemini)</button>
+      <div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.6rem;align-items:center;">
+        <input id="add-pdf-file" type="file" accept="application/pdf" style="font-size:0.8rem;" />
+        <button type="button" id="btn-read-pdf" class="btn btn-primary">Read &amp; Preview PDF</button>
       </div>
-      <div id="add-parse-status" class="unit-sub" style="margin-top:0.45rem;"></div>
-      <div style="margin-top:0.65rem;">
-        <label class="add-syl-label">Syllabus JSON (or paste plain text with Unit / Lesson lines and click Parse Text)</label>
-        <textarea id="add-syllabus-json" class="add-syl-textarea" placeholder='Paste JSON array of subjects OR plain text starting with Unit I / Lesson 1...'></textarea>
+      <div id="add-parse-status" class="unit-sub" style="margin-top:0.5rem;"></div>
+    </div>
+
+    <div id="add-preview-wrap" class="add-syl-card ${pendingParsedSubjects ? '' : 'hidden'}">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+        <div style="font-weight:700;font-size:0.95rem;">Step 3: Save Draft or Publish</div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <button type="button" id="btn-save-draft-syllabus" class="btn btn-outline">Save Draft &amp; Preview on Site</button>
+          <button type="button" id="btn-save-custom-syllabus" class="btn btn-primary">Publish to Everyone</button>
+        </div>
       </div>
-      <div style="margin-top:0.65rem;display:flex;flex-wrap:wrap;gap:0.5rem;">
-        <button type="button" id="btn-parse-plain-text" class="btn btn-outline">Convert Text → JSON</button>
-        <button type="button" id="btn-save-custom-syllabus" class="btn btn-primary">Save &amp; Publish to Website</button>
+      <div id="add-visual-preview" style="margin-top:0.5rem;">
+        ${renderVisualPreviewHtml(pendingParsedSubjects)}
       </div>
     </div>
 
     ${
       customCoursesHtml
-        ? `<div class="add-syl-card"><div style="font-weight:700;font-size:0.9rem;margin-bottom:0.4rem;">Published Custom Courses</div>${customCoursesHtml}</div>`
+        ? `<div class="add-syl-card"><div style="font-weight:700;font-size:0.95rem;margin-bottom:0.4rem;">Manage Added Courses &amp; Drafts</div>${customCoursesHtml}</div>`
         : ''
     }
   `;
@@ -3711,78 +3816,69 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
     return;
   }
 
-  if (e.target.closest('#btn-parse-plain-text')) {
-    const raw = document.getElementById('add-syllabus-json').value;
-    const subName = document.getElementById('add-subject-name').value.trim();
-    const parsed = parsePlainTextSyllabus(raw, subName);
-    document.getElementById('add-syllabus-json').value = JSON.stringify(parsed, null, 2);
-    document.getElementById('add-parse-status').textContent = `Converted ${parsed.length} subject(s) to JSON.`;
-    return;
-  }
-
-  if (e.target.closest('#btn-parse-pdf-auto')) {
-    const fileInput = document.getElementById('add-pdf-file');
-    const statusEl = document.getElementById('add-parse-status');
-    const file = fileInput && fileInput.files && fileInput.files[0];
-    if (!file) { statusEl.textContent = 'Please select a PDF file first.'; return; }
-    statusEl.textContent = 'Extracting text from PDF...';
-    extractPdfTextClient(file).then((txt) => {
-      const subName = document.getElementById('add-subject-name').value.trim() || file.name.replace(/\.pdf$/i, '');
-      const parsed = parsePlainTextSyllabus(txt, subName);
-      document.getElementById('add-syllabus-json').value = JSON.stringify(parsed, null, 2);
-      statusEl.textContent = 'Auto-parsed PDF! Review/edit JSON below before saving.';
-    }).catch((err) => { statusEl.textContent = err.message || 'PDF parse failed.'; });
-    return;
-  }
-
-  if (e.target.closest('#btn-parse-pdf-ai')) {
+  if (e.target.closest('#btn-read-pdf')) {
     const fileInput = document.getElementById('add-pdf-file');
     const keyInput = document.getElementById('add-gemini-key');
     const statusEl = document.getElementById('add-parse-status');
-    const apiKey = keyInput ? keyInput.value.trim() : '';
+    const previewWrap = document.getElementById('add-preview-wrap');
+    const previewEl = document.getElementById('add-visual-preview');
     const file = fileInput && fileInput.files && fileInput.files[0];
-    if (!apiKey) { statusEl.textContent = 'Enter your Gemini API key first (from aistudio.google.com).'; return; }
-    try { localStorage.setItem(GEMINI_KEY_STORAGE, apiKey); } catch (err) {}
-    if (!file) { statusEl.textContent = 'Please select a PDF file first.'; return; }
-    statusEl.textContent = 'Reading PDF and structuring with Gemini AI...';
+    if (!file) {
+      statusEl.textContent = 'Pehle ek PDF file select karo.';
+      return;
+    }
+    const apiKey = keyInput ? keyInput.value.trim() : '';
+    if (apiKey) {
+      try { localStorage.setItem(GEMINI_KEY_STORAGE, apiKey); } catch (err) {}
+    }
     const cLabel = document.getElementById('add-course-name').value.trim() || 'College Course';
+    const subName = document.getElementById('add-subject-name').value.trim() || file.name.replace(/\.pdf$/i, '');
+
+    statusEl.textContent = apiKey ? 'AI se PDF read ho rahi hai...' : 'PDF read ho rahi hai...';
     extractPdfTextClient(file)
-      .then((txt) => parseWithGeminiApi(apiKey, txt, cLabel))
+      .then((txt) => (apiKey ? parseWithGeminiApi(apiKey, txt, cLabel) : parsePlainTextSyllabus(txt, subName)))
       .then((parsed) => {
-        document.getElementById('add-syllabus-json').value = JSON.stringify(parsed, null, 2);
-        statusEl.textContent = 'AI parsed PDF cleanly! Review below and click Save & Publish.';
+        if (!Array.isArray(parsed) || !parsed.length) {
+          throw new Error('Is PDF se topics extract nahi ho paye. Gemini API key daal kar try karo.');
+        }
+        pendingParsedSubjects = parsed;
+        previewEl.innerHTML = renderVisualPreviewHtml(parsed);
+        previewWrap.classList.remove('hidden');
+        statusEl.textContent = `Ready! ${parsed.length} subject(s) mil gaye. Niche Preview check karke "Publish to Website" dabao.`;
       })
-      .catch((err) => { statusEl.textContent = err.message || 'AI parse failed.'; });
+      .catch((err) => {
+        statusEl.textContent = err.message || 'PDF read failed.';
+      });
     return;
   }
 
-  if (e.target.closest('#btn-save-custom-syllabus')) {
+  const saveCustomCourse = (isDraft, openPreviewAfter) => {
     if (!fbDb || !canAdminAddSyllabus(currentUser)) return;
-    const cId = (document.getElementById('add-course-id').value || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
     const cName = (document.getElementById('add-course-name').value || '').trim();
-    const yId = (document.getElementById('add-year-id').value || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
     const yLabel = (document.getElementById('add-year-label').value || '').trim();
-    const rawJson = (document.getElementById('add-syllabus-json').value || '').trim();
     const statusEl = document.getElementById('add-parse-status');
-    if (!cId || !cName || !yId || !yLabel || !rawJson) {
-      statusEl.textContent = 'Please fill all Course, Year, and Syllabus JSON fields.';
+    if (!cName || !yLabel) {
+      statusEl.textContent = 'Step 1 me Course Name aur Year & Semester dono bharo.';
       return;
     }
-    let subjects;
-    try {
-      subjects = JSON.parse(rawJson);
-      if (!Array.isArray(subjects) || !subjects.length) throw new Error('Invalid subjects array');
-    } catch (err) {
-      statusEl.textContent = 'Invalid JSON format. Click "Convert Text → JSON" or check syntax.';
+    if (!pendingParsedSubjects || !pendingParsedSubjects.length) {
+      statusEl.textContent = 'Pehle Step 2 me PDF read karo.';
       return;
     }
+    const cId = editingCourseMeta
+      ? editingCourseMeta.courseId
+      : cName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    const yId = editingCourseMeta
+      ? editingCourseMeta.yearId
+      : `${cId}_${yLabel.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}`;
     const shortYr = yLabel.split('(')[0].trim() || yLabel;
     const yearObj = {
       id: yId,
       label: yLabel,
       shortLabel: shortYr,
       semLabel: `${cName} ${yLabel}`,
-      subjects,
+      subjects: pendingParsedSubjects,
+      isDraft: !!isDraft,
       sem2ComingSoon: false
     };
     const existing = COURSES[cId];
@@ -3795,15 +3891,155 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
       years: mergedYears,
       updatedAt: new Date().toISOString()
     };
-    statusEl.textContent = 'Publishing to Firestore...';
+    statusEl.textContent = isDraft ? 'Saving draft...' : 'Publishing to website...';
     fbDb.collection('courses').doc(cId).set(docPayload, { merge: true }).then(() => {
-      statusEl.textContent = 'Published live! Students can now select this course.';
-      showToast(`${cName} published!`);
-      renderAdminAddSyllabus();
+      pendingParsedSubjects = null;
+      editingCourseMeta = null;
+      if (openPreviewAfter) {
+        previewDraftState = { courseId: cId, yearId: yId };
+        activeTab = 'overview';
+        document.getElementById('admin-modal').classList.remove('open');
+        updateYearUI();
+        render();
+        showToast('Draft Preview active (only visible to you)');
+      } else {
+        showToast(isDraft ? `${cName} saved as draft!` : `${cName} published!`);
+        renderAdminAddSyllabus();
+      }
     }).catch((err) => {
-      statusEl.textContent = `Save failed: ${err.message || 'Check Firestore Rules for courses collection'}`;
+      statusEl.textContent = `Save failed: ${err.message || 'Check Firestore Rules'}`;
     });
+  };
+
+  if (e.target.closest('#btn-save-draft-syllabus')) {
+    saveCustomCourse(true, true);
+    return;
   }
+
+  if (e.target.closest('#btn-save-custom-syllabus')) {
+    saveCustomCourse(false, false);
+    return;
+  }
+
+  if (e.target.closest('#btn-cancel-edit-syl')) {
+    editingCourseMeta = null;
+    pendingParsedSubjects = null;
+    renderAdminAddSyllabus();
+    return;
+  }
+
+  const prevBtn = e.target.closest('[data-preview-course]');
+  if (prevBtn && canAdminAddSyllabus(currentUser)) {
+    const cId = prevBtn.getAttribute('data-preview-course');
+    const yId = prevBtn.getAttribute('data-preview-year');
+    previewDraftState = { courseId: cId, yearId: yId };
+    activeTab = 'overview';
+    document.getElementById('admin-modal').classList.remove('open');
+    updateYearUI();
+    render();
+    showToast('Previewing course on website');
+    return;
+  }
+
+  const editBtn = e.target.closest('[data-edit-course]');
+  if (editBtn && canAdminAddSyllabus(currentUser)) {
+    const cId = editBtn.getAttribute('data-edit-course');
+    const yId = editBtn.getAttribute('data-edit-year');
+    const cObj = COURSES[cId];
+    const yObj = cObj && cObj.years[yId];
+    if (cObj && yObj) {
+      editingCourseMeta = {
+        courseId: cId,
+        yearId: yId,
+        courseName: cObj.fullName || cObj.name,
+        yearLabel: yObj.label
+      };
+      pendingParsedSubjects = yObj.subjects || [];
+      renderAdminAddSyllabus();
+      showToast('Loaded for editing — re-upload PDF or publish/save');
+    }
+    return;
+  }
+
+  const pubToggle = e.target.closest('[data-toggle-publish-course]');
+  if (pubToggle && fbDb && canAdminAddSyllabus(currentUser)) {
+    const cId = pubToggle.getAttribute('data-toggle-publish-course');
+    const yId = pubToggle.getAttribute('data-toggle-publish-year');
+    const cObj = COURSES[cId];
+    const yObj = cObj && cObj.years[yId];
+    if (cObj && yObj) {
+      const nextDraft = !yObj.isDraft;
+      const updatedYears = { ...cObj.years, [yId]: { ...yObj, isDraft: nextDraft } };
+      fbDb.collection('courses').doc(cId).set({ years: updatedYears, updatedAt: new Date().toISOString() }, { merge: true })
+        .then(() => {
+          showToast(nextDraft ? 'Moved to Draft (hidden from students)' : 'Published live to everyone!');
+          renderAdminAddSyllabus();
+        })
+        .catch((err) => showToast(err.message || 'Update failed'));
+    }
+    return;
+  }
+
+  const delYearBtn = e.target.closest('[data-delete-custom-year]');
+  if (delYearBtn && fbDb && canAdminAddSyllabus(currentUser)) {
+    const cId = delYearBtn.getAttribute('data-delete-custom-year');
+    const yId = delYearBtn.getAttribute('data-year-id');
+    const cObj = COURSES[cId];
+    if (!cObj) return;
+    openModal(
+      'Delete Syllabus?',
+      `Are you sure you want to delete ${cObj.name} (${cObj.years[yId]?.label || yId})?`,
+      () => {
+        const remaining = { ...cObj.years };
+        delete remaining[yId];
+        if (Object.keys(remaining).length === 0) {
+          fbDb.collection('courses').doc(cId).delete().then(() => {
+            delete COURSES[cId];
+            if (previewDraftState && previewDraftState.courseId === cId) previewDraftState = null;
+            updateYearUI();
+            render();
+            renderAdminAddSyllabus();
+            showToast('Course deleted');
+          });
+        } else {
+          fbDb.collection('courses').doc(cId).set({ years: remaining }, { merge: true }).then(() => {
+            COURSES[cId].years = remaining;
+            updateYearUI();
+            render();
+            renderAdminAddSyllabus();
+            showToast('Year deleted');
+          });
+        }
+      }
+    );
+  }
+});
+
+// Preview Banner Events
+document.getElementById('btn-preview-exit').addEventListener('click', () => {
+  previewDraftState = null;
+  activeTab = 'overview';
+  updateYearUI();
+  render();
+  showToast('Exited preview mode');
+});
+
+document.getElementById('btn-preview-publish').addEventListener('click', () => {
+  if (!previewDraftState || !fbDb || !canAdminAddSyllabus(currentUser)) return;
+  const { courseId, yearId } = previewDraftState;
+  const cObj = COURSES[courseId];
+  const yObj = cObj && cObj.years[yearId];
+  if (!cObj || !yObj) return;
+  const updatedYears = { ...cObj.years, [yearId]: { ...yObj, isDraft: false } };
+  fbDb.collection('courses').doc(courseId).set({ years: updatedYears, updatedAt: new Date().toISOString() }, { merge: true })
+    .then(() => {
+      previewDraftState = null;
+      activeTab = 'overview';
+      updateYearUI();
+      render();
+      showToast('Published live to everyone!');
+    })
+    .catch((err) => showToast(err.message || 'Publish failed'));
 });
 
 // Show gentle sign-in prompt 10 seconds after opening if not signed in

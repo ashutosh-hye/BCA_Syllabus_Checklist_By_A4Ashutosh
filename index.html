@@ -15,6 +15,14 @@
 </head>
 <body>
   <div id="app" class="container">
+    <!-- Admin Draft Preview Banner -->
+    <div id="preview-banner" class="sem-notice-banner hidden" style="margin-top:0;margin-bottom:1rem;justify-content:space-between;flex-wrap:wrap;">
+      <span id="preview-banner-text"><strong>Draft Preview:</strong> Only visible to you.</span>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button id="btn-preview-publish" type="button" class="btn btn-primary">Publish to Everyone</button>
+        <button id="btn-preview-exit" type="button" class="btn btn-outline">Exit Preview</button>
+      </div>
+    </div>
     <!-- Top Header -->
     <header class="card header-card">
       <div class="header-top">
