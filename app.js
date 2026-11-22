@@ -2272,7 +2272,25 @@ function openCourseYearPickerModal() {
   document.getElementById('year-picker-modal').classList.add('open');
 }
 
+let cachedAdminGeminiKey = '';
+try { cachedAdminGeminiKey = localStorage.getItem(GEMINI_KEY_STORAGE) || ''; } catch (e) {}
+
+function loadAdminSecretsIfAllowed(user) {
+  if (!fbDb || !canAdminAddSyllabus(user)) return;
+  fbDb.collection('admin_config').doc('secrets').get()
+    .then((doc) => {
+      if (doc.exists && doc.data() && doc.data().geminiApiKey) {
+        cachedAdminGeminiKey = doc.data().geminiApiKey;
+        try { localStorage.setItem(GEMINI_KEY_STORAGE, cachedAdminGeminiKey); } catch (e) {}
+        const inp = document.getElementById('add-gemini-key');
+        if (inp && !inp.value) inp.value = cachedAdminGeminiKey;
+      }
+    })
+    .catch(() => {});
+}
+
 function startCloudListener(user) {
+  loadAdminSecretsIfAllowed(user);
   if (unsubscribeSnapshot) {
     unsubscribeSnapshot();
     unsubscribeSnapshot = null;
@@ -2335,12 +2353,12 @@ function initFirebase() {
                 fullName: data.fullName || data.name || data.id.toUpperCase(),
                 defaultYear: data.defaultYear || Object.keys(data.years)[0],
                 years: data.years,
-                isCustom: true
+                isCustom: true,
+                hasCustomDoc: true
               };
             } else {
               COURSES[data.id].years = { ...COURSES[data.id].years, ...data.years };
-              if (data.name) COURSES[data.id].name = data.name;
-              if (data.fullName) COURSES[data.id].fullName = data.fullName;
+              COURSES[data.id].hasCustomDoc = true;
             }
             changed = true;
           }
@@ -2665,6 +2683,7 @@ function parsePlainTextSyllabus(rawText, defaultSubjectName) {
   let curUnit = null;
   let curGroup = null;
   let uIdx = 0;
+  let detectedSubject = '';
 
   const ensureUnit = (title) => {
     uIdx++;
@@ -2683,21 +2702,29 @@ function parsePlainTextSyllabus(rawText, defaultSubjectName) {
       ensureUnit(line);
     } else if (/^(lesson|chapter|topic group)\b/i.test(line)) {
       ensureGroup(line);
+    } else if (!curUnit) {
+      if (!detectedSubject) detectedSubject = line;
     } else {
       const clean = line.replace(/^[-*•\u2022]\s*/, '').replace(/^\[\s*\]\s*/, '');
       if (!clean) return;
-      if (!curUnit) ensureUnit('Unit I');
       if (!curGroup) ensureGroup('Topics');
       curGroup.topics.push(clean);
     }
   });
 
+  if (!units.length && detectedSubject) {
+    ensureUnit('Unit I');
+    ensureGroup('Topics');
+    curGroup.topics.push(detectedSubject);
+  }
   if (!units.length) return [];
+
+  const finalName = (defaultSubjectName || detectedSubject || '1. New Subject').trim();
   return [
     {
       id: `sub_${Date.now().toString(36)}`,
-      shortName: (defaultSubjectName || 'Subject').slice(0, 22),
-      name: defaultSubjectName || '1. New Subject',
+      shortName: finalName.slice(0, 22),
+      name: finalName,
       code: 'CORE',
       category: '4 Credits',
       units
@@ -2718,7 +2745,24 @@ async function extractPdfTextClient(file) {
   for (let i = 1; i <= maxPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    fullText += content.items.map((it) => it.str).join(' ') + '\n';
+    let lastY = null;
+    let line = '';
+    content.items.forEach((it) => {
+      const y = it.transform ? Math.round(it.transform[5]) : null;
+      if (lastY !== null && y !== null && Math.abs(y - lastY) > 2) {
+        if (line.trim()) fullText += line.trim() + '\n';
+        line = '';
+      }
+      line += it.str || '';
+      if (it.hasEOL) {
+        if (line.trim()) fullText += line.trim() + '\n';
+        line = '';
+        lastY = null;
+      } else {
+        lastY = y;
+      }
+    });
+    if (line.trim()) fullText += line.trim() + '\n';
   }
   return fullText;
 }
@@ -2750,7 +2794,7 @@ Return ONLY valid JSON (no markdown fences) matching this exact schema:
 Text:\n${rawText.slice(0, 120000)}`;
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2822,7 +2866,7 @@ function renderAdminAddSyllabus() {
   const preYearLabel = editingCourseMeta ? editingCourseMeta.yearLabel : '';
 
   const customCoursesHtml = Object.values(COURSES)
-    .filter((c) => c.isCustom)
+    .filter((c) => c.isCustom || c.hasCustomDoc)
     .map((c) => {
       const yearsRows = Object.values(c.years || {})
         .map(
@@ -2847,26 +2891,43 @@ function renderAdminAddSyllabus() {
         .join('');
       return `
         <div class="admin-user-card" style="margin-top:0.5rem;">
-          <div style="font-weight:700;font-size:0.92rem;margin-bottom:0.35rem;">${escapeHtml(c.fullName || c.name)}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem;">
+            <span style="font-weight:700;font-size:0.92rem;">${escapeHtml(c.fullName || c.name)}</span>
+            <button type="button" data-reset-custom-doc="${escapeHtml(c.id)}" class="btn btn-danger-soft" style="padding:0.2rem 0.5rem;font-size:0.72rem;">Remove Custom Data</button>
+          </div>
           ${yearsRows}
         </div>
       `;
     })
     .join('');
 
+  const targetOptions = [];
+  Object.entries(COURSES).forEach(([cId, cObj]) => {
+    Object.entries(cObj.years || {}).forEach(([yId, yObj]) => {
+      targetOptions.push(`<option value="${escapeHtml(cId)}::${escapeHtml(yId)}">${escapeHtml(cObj.name)} — ${escapeHtml(yObj.label)}</option>`);
+    });
+  });
+  targetOptions.push('<option value="__new__">+ Create New Course / Year</option>');
+
   container.innerHTML = `
     <div class="add-syl-card">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
-        <div style="font-weight:700;font-size:0.95rem;">${editingCourseMeta ? 'Editing Syllabus' : 'Step 1: Course &amp; Year'}</div>
+        <div style="font-weight:700;font-size:0.95rem;">${editingCourseMeta ? 'Editing Syllabus' : 'Step 1: Choose Course &amp; Year'}</div>
         ${editingCourseMeta ? '<button type="button" id="btn-cancel-edit-syl" class="btn btn-muted" style="padding:0.25rem 0.6rem;font-size:0.75rem;">Cancel Edit</button>' : ''}
       </div>
-      <div class="add-syl-grid">
+      <div style="margin-top:0.5rem;">
+        <label class="add-syl-label">Add Subject To:</label>
+        <select id="add-target-select" class="add-syl-input" ${editingCourseMeta ? 'disabled' : ''}>
+          ${targetOptions.join('')}
+        </select>
+      </div>
+      <div id="add-new-course-fields" class="add-syl-grid hidden" style="margin-top:0.6rem;">
         <div>
-          <label class="add-syl-label">Course Name</label>
+          <label class="add-syl-label">New Course Name</label>
           <input id="add-course-name" class="add-syl-input" value="${escapeHtml(preCourseName)}" placeholder="e.g. RMLAU B.Com" />
         </div>
         <div>
-          <label class="add-syl-label">Year &amp; Semester</label>
+          <label class="add-syl-label">New Year &amp; Semester</label>
           <input id="add-year-label" class="add-syl-input" value="${escapeHtml(preYearLabel)}" placeholder="e.g. 1st Year (Semester I)" />
         </div>
       </div>
@@ -2876,17 +2937,21 @@ function renderAdminAddSyllabus() {
       <div style="font-weight:700;font-size:0.95rem;">Step 2: Upload Syllabus PDF</div>
       <div class="add-syl-grid" style="margin-top:0.5rem;">
         <div>
-          <label class="add-syl-label">Subject Name (only if PDF doesn't list it)</label>
+          <label class="add-syl-label">Subject Name (for Free Auto-Parse)</label>
           <input id="add-subject-name" class="add-syl-input" placeholder="e.g. Financial Accounting" />
         </div>
         <div>
-          <label class="add-syl-label">Gemini API Key (saved once in browser — for smart AI reading)</label>
-          <input id="add-gemini-key" type="password" class="add-syl-input" value="${escapeHtml(savedKey)}" placeholder="Paste free key from aistudio.google.com" />
+          <label class="add-syl-label">Gemini API Key (saved securely in your Admin account)</label>
+          <div style="display:flex;gap:0.4rem;">
+            <input id="add-gemini-key" type="password" class="add-syl-input" value="${escapeHtml(savedKey || cachedAdminGeminiKey)}" placeholder="Paste key once &amp; click Save" />
+            <button type="button" id="btn-save-gemini-key" class="btn btn-outline">Save Key</button>
+          </div>
         </div>
       </div>
-      <div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.6rem;align-items:center;">
+      <div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;">
         <input id="add-pdf-file" type="file" accept="application/pdf" style="font-size:0.8rem;" />
-        <button type="button" id="btn-read-pdf" class="btn btn-primary">Read &amp; Preview PDF</button>
+        <button type="button" id="btn-read-pdf-free" class="btn btn-outline">Read PDF (Free)</button>
+        <button type="button" id="btn-read-pdf-ai" class="btn btn-primary">Read PDF with AI (Gemini)</button>
       </div>
       <div id="add-parse-status" class="unit-sub" style="margin-top:0.5rem;"></div>
     </div>
@@ -2910,6 +2975,14 @@ function renderAdminAddSyllabus() {
         : ''
     }
   `;
+
+  const sel = document.getElementById('add-target-select');
+  const newFields = document.getElementById('add-new-course-fields');
+  if (sel && newFields) {
+    sel.addEventListener('change', () => {
+      newFields.classList.toggle('hidden', sel.value !== '__new__');
+    });
+  }
 }
 
 function loadAdminDashboard() {
@@ -3816,7 +3889,30 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
     return;
   }
 
-  if (e.target.closest('#btn-read-pdf')) {
+  if (e.target.closest('#btn-save-gemini-key')) {
+    const keyInput = document.getElementById('add-gemini-key');
+    const statusEl = document.getElementById('add-parse-status');
+    const k = keyInput ? keyInput.value.trim() : '';
+    if (!k) { statusEl.textContent = 'Pehle Gemini API key paste karo.'; return; }
+    cachedAdminGeminiKey = k;
+    try { localStorage.setItem(GEMINI_KEY_STORAGE, k); } catch (err) {}
+    if (fbDb && canAdminAddSyllabus(currentUser)) {
+      fbDb.collection('admin_config').doc('secrets').set({ geminiApiKey: k, updatedAt: new Date().toISOString() }, { merge: true })
+        .then(() => {
+          statusEl.textContent = 'Gemini API Key securely saved to your Admin account (laptop + mobile dono pe kaam karegi)!';
+          showToast('API Key saved!');
+        })
+        .catch(() => {
+          statusEl.textContent = 'API Key saved in this browser! (Add admin_config Firestore rule to sync across devices.)';
+          showToast('API Key saved locally!');
+        });
+    } else {
+      statusEl.textContent = 'API Key saved in this browser!';
+    }
+    return;
+  }
+
+  const runPdfRead = (useAi) => {
     const fileInput = document.getElementById('add-pdf-file');
     const keyInput = document.getElementById('add-gemini-key');
     const statusEl = document.getElementById('add-parse-status');
@@ -3827,59 +3923,93 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
       statusEl.textContent = 'Pehle ek PDF file select karo.';
       return;
     }
-    const apiKey = keyInput ? keyInput.value.trim() : '';
-    if (apiKey) {
+    const apiKey = (keyInput && keyInput.value.trim()) || cachedAdminGeminiKey;
+    if (useAi && !apiKey) {
+      statusEl.textContent = 'AI mode ke liye upar Gemini API Key daal kar "Save Key" dabao (ya "Read PDF (Free)" use karo).';
+      return;
+    }
+    if (useAi && apiKey) {
+      cachedAdminGeminiKey = apiKey;
       try { localStorage.setItem(GEMINI_KEY_STORAGE, apiKey); } catch (err) {}
     }
-    const cLabel = document.getElementById('add-course-name').value.trim() || 'College Course';
-    const subName = document.getElementById('add-subject-name').value.trim() || file.name.replace(/\.pdf$/i, '');
+    const sel = document.getElementById('add-target-select');
+    const cLabel = (sel && sel.value !== '__new__' ? sel.options[sel.selectedIndex].text : (document.getElementById('add-course-name')?.value || '')).trim() || 'College Course';
+    const subName = (document.getElementById('add-subject-name')?.value || '').trim();
 
-    statusEl.textContent = apiKey ? 'AI se PDF read ho rahi hai...' : 'PDF read ho rahi hai...';
+    statusEl.textContent = useAi ? 'AI (Gemini) se PDF read ho rahi hai...' : 'Free Auto-Parser se PDF read ho rahi hai...';
     extractPdfTextClient(file)
-      .then((txt) => (apiKey ? parseWithGeminiApi(apiKey, txt, cLabel) : parsePlainTextSyllabus(txt, subName)))
+      .then((txt) => (useAi ? parseWithGeminiApi(apiKey, txt, cLabel) : parsePlainTextSyllabus(txt, subName)))
       .then((parsed) => {
         if (!Array.isArray(parsed) || !parsed.length) {
-          throw new Error('Is PDF se topics extract nahi ho paye. Gemini API key daal kar try karo.');
+          throw new Error('Is PDF se topics extract nahi ho paye. "Read PDF with AI (Gemini)" try karo.');
         }
         pendingParsedSubjects = parsed;
         previewEl.innerHTML = renderVisualPreviewHtml(parsed);
         previewWrap.classList.remove('hidden');
-        statusEl.textContent = `Ready! ${parsed.length} subject(s) mil gaye. Niche Preview check karke "Publish to Website" dabao.`;
+        statusEl.textContent = `Ready! ${parsed.length} subject(s) mil gaye. Niche Preview check karke Save Draft ya Publish dabao.`;
       })
       .catch((err) => {
         statusEl.textContent = err.message || 'PDF read failed.';
       });
+  };
+
+  if (e.target.closest('#btn-read-pdf-free')) {
+    runPdfRead(false);
+    return;
+  }
+
+  if (e.target.closest('#btn-read-pdf-ai')) {
+    runPdfRead(true);
     return;
   }
 
   const saveCustomCourse = (isDraft, openPreviewAfter) => {
     if (!fbDb || !canAdminAddSyllabus(currentUser)) return;
-    const cName = (document.getElementById('add-course-name').value || '').trim();
-    const yLabel = (document.getElementById('add-year-label').value || '').trim();
+    const targetVal = document.getElementById('add-target-select') ? document.getElementById('add-target-select').value : '__new__';
     const statusEl = document.getElementById('add-parse-status');
-    if (!cName || !yLabel) {
-      statusEl.textContent = 'Step 1 me Course Name aur Year & Semester dono bharo.';
-      return;
-    }
     if (!pendingParsedSubjects || !pendingParsedSubjects.length) {
       statusEl.textContent = 'Pehle Step 2 me PDF read karo.';
       return;
     }
-    const cId = editingCourseMeta
-      ? editingCourseMeta.courseId
-      : cName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-    const yId = editingCourseMeta
-      ? editingCourseMeta.yearId
-      : `${cId}_${yLabel.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}`;
+
+    let cId, cName, yId, yLabel, subjectsToSave;
+    if (editingCourseMeta) {
+      cId = editingCourseMeta.courseId;
+      yId = editingCourseMeta.yearId;
+      cName = COURSES[cId].name;
+      yLabel = COURSES[cId].years[yId].label;
+      subjectsToSave = pendingParsedSubjects;
+    } else if (targetVal !== '__new__' && targetVal.includes('::')) {
+      const parts = targetVal.split('::');
+      cId = parts[0];
+      yId = parts[1];
+      const cObj = COURSES[cId];
+      const yObj = cObj && cObj.years[yId];
+      cName = cObj.name;
+      yLabel = yObj.label;
+      subjectsToSave = [...(yObj.subjects || []), ...pendingParsedSubjects];
+    } else {
+      cName = (document.getElementById('add-course-name').value || '').trim();
+      yLabel = (document.getElementById('add-year-label').value || '').trim();
+      if (!cName || !yLabel) {
+        statusEl.textContent = 'Step 1 me New Course Name aur Year & Semester dono bharo.';
+        return;
+      }
+      cId = cName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+      yId = `${cId}_${yLabel.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}`;
+      subjectsToSave = pendingParsedSubjects;
+    }
+
     const shortYr = yLabel.split('(')[0].trim() || yLabel;
+    const existingYear = COURSES[cId] && COURSES[cId].years[yId];
     const yearObj = {
       id: yId,
       label: yLabel,
-      shortLabel: shortYr,
-      semLabel: `${cName} ${yLabel}`,
-      subjects: pendingParsedSubjects,
+      shortLabel: (existingYear && existingYear.shortLabel) || shortYr,
+      semLabel: (existingYear && existingYear.semLabel) || `${cName} ${yLabel}`,
+      subjects: subjectsToSave,
       isDraft: !!isDraft,
-      sem2ComingSoon: false
+      sem2ComingSoon: !!(existingYear && existingYear.sem2ComingSoon)
     };
     const existing = COURSES[cId];
     const mergedYears = existing ? { ...existing.years, [yId]: yearObj } : { [yId]: yearObj };
@@ -3977,6 +4107,22 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
         })
         .catch((err) => showToast(err.message || 'Update failed'));
     }
+    return;
+  }
+
+  const resetDocBtn = e.target.closest('[data-reset-custom-doc]');
+  if (resetDocBtn && fbDb && canAdminAddSyllabus(currentUser)) {
+    const cId = resetDocBtn.getAttribute('data-reset-custom-doc');
+    openModal(
+      'Remove Custom Firestore Data?',
+      `This will delete all custom/uploaded entries stored in Firestore for "${cId}" (built-in BCA/DU B.Com subjects will stay intact).`,
+      () => {
+        fbDb.collection('courses').doc(cId).delete().then(() => {
+          showToast('Custom data removed! Reloading...');
+          setTimeout(() => location.reload(), 600);
+        });
+      }
+    );
     return;
   }
 
