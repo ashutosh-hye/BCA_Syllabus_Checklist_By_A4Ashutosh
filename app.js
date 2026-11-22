@@ -2837,6 +2837,7 @@ async function extractPdfTextClient(file) {
 let pendingParsedSubjects = null;
 let pendingDetectedMeta = null;
 let pendingMatchReport = null;
+let selectedPdfFile = null;
 
 function normalizeTextKey(s) {
   return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -3136,7 +3137,15 @@ function renderAdminAddSyllabus() {
         <input id="add-subject-name" class="add-syl-input" placeholder="e.g. Environmental Studies" />
       </div>
       <div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;">
-        <input id="add-pdf-file" type="file" accept="application/pdf" style="font-size:0.8rem;" />
+        <input id="add-pdf-file" type="file" accept="application/pdf" class="${selectedPdfFile ? 'hidden' : ''}" style="font-size:0.8rem;" />
+        ${
+          selectedPdfFile
+            ? `<div style="display:inline-flex;align-items:center;gap:0.45rem;padding:0.3rem 0.65rem;border-radius:0.5rem;border:1px solid #cbd5e1;font-size:0.8rem;">
+                 <span>📄 <strong>${escapeHtml(selectedPdfFile.name)}</strong></span>
+                 <button type="button" id="btn-clear-pdf-file" class="btn btn-danger-soft" style="padding:0.15rem 0.45rem;font-size:0.72rem;" title="Remove PDF">✕</button>
+               </div>`
+            : ''
+        }
         <button type="button" id="btn-read-pdf-free" class="btn btn-outline"
           title="Instant local scan — best for clean, well-defined syllabus PDFs (less accurate on messy PDFs)">
           Auto-Detect (Free)
@@ -3238,6 +3247,15 @@ function renderAdminAddSyllabus() {
     </div>
   `;
 
+  const pdfInp = document.getElementById('add-pdf-file');
+  if (pdfInp) {
+    pdfInp.addEventListener('change', () => {
+      if (pdfInp.files && pdfInp.files[0]) {
+        selectedPdfFile = pdfInp.files[0];
+        renderAdminAddSyllabus();
+      }
+    });
+  }
   const chkDet = document.getElementById('chk-use-detected');
   const manWrap = document.getElementById('add-manual-target-wrap');
   if (chkDet && manWrap) {
@@ -4187,6 +4205,15 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
     return;
   }
 
+  if (e.target.closest('#btn-clear-pdf-file')) {
+    selectedPdfFile = null;
+    pendingParsedSubjects = null;
+    pendingDetectedMeta = null;
+    pendingMatchReport = null;
+    renderAdminAddSyllabus();
+    return;
+  }
+
   if (e.target.closest('#btn-cancel-preview')) {
     pendingParsedSubjects = null;
     pendingDetectedMeta = null;
@@ -4208,7 +4235,7 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
     const btnFree = document.getElementById('btn-read-pdf-free');
     const btnAi = document.getElementById('btn-read-pdf-ai');
 
-    const file = fileInput && fileInput.files && fileInput.files[0];
+    const file = selectedPdfFile || (fileInput && fileInput.files && fileInput.files[0]);
     if (!file) {
       statusEl.className = 'sync-error';
       statusEl.textContent = 'Pehle ek PDF file select karo.';
