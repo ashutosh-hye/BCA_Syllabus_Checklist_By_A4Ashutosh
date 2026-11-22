@@ -2740,26 +2740,41 @@ function parsePlainTextSyllabus(rawText, defaultSubjectName) {
 }
 
 async function parseWithGeminiApi(apiKey, rawText) {
-  const prompt = `Extract the syllabus from the following text. Ignore Suggested Readings, References, Bibliography, Glossaries, and Practice Questions.
-Return ONLY valid JSON matching this schema:
+  const prompt = `You are an expert Indian university syllabus parser. Extract a clean, accurate, deterministic syllabus checklist from the provided text.
+
+STRICT RULES:
+1. Course & Year Detection:
+   - Detect courseName accurately (e.g., "DU B.Com" if University of Delhi + B.Com, "BCA", "BBA", "MCA", etc., or "" if not stated).
+   - Detect yearLabel accurately (e.g., "1st Year (Semester I)", "2nd Year (Semester III)", or "" if not stated).
+2. Hierarchy (Subject -> Units -> Chapters/Lessons -> Topics):
+   - If the PDF has Lessons/Chapters inside a Unit, put each Lesson as a group in "groups".
+   - If the PDF only has bullets inside a Unit (no Lessons), put them under one group named "Core Topics".
+   - Keep EVERY bullet point or numbered subtopic from the syllabus intact as its own topic string. Do NOT randomly merge separate bullets or invent extra topics.
+3. What to IGNORE completely:
+   - Suggested Readings, References, Bibliography, Recommended Books, Glossaries, Learning Objectives, Summary, In-Text Questions, Self-Assessment Questions, Answer Keys, and standalone page numbers or "(X lectures)" lines.
+4. Example Output Format:
 {
-  "courseName": "Detected course name (e.g. BCA, DU B.Com, BBA, or empty string if not mentioned)",
-  "yearLabel": "Detected year/semester (e.g. 1st Year (Semester I), or empty string if not mentioned)",
+  "courseName": "DU B.Com",
+  "yearLabel": "1st Year (Semester I)",
   "subjects": [
     {
-      "id": "unique_short_id",
-      "shortName": "Short Name (max 20 chars)",
-      "name": "1. Full Subject Name",
-      "code": "Subject Code or CORE",
-      "category": "Credits or Category",
+      "id": "bcom_evs",
+      "shortName": "Environmental Studies",
+      "name": "Environmental Studies",
+      "code": "Core Module",
+      "category": "Compulsory",
       "units": [
         {
-          "id": "unique_unit_id",
-          "title": "Unit 1 — Unit Title",
+          "id": "bcom_evs_u1",
+          "title": "Unit 1 — Introduction to Environmental Studies (2 Lectures)",
           "groups": [
             {
-              "name": "Lesson / Chapter / Topics",
-              "topics": ["Subtopic 1", "Subtopic 2"]
+              "name": "Core Topics",
+              "topics": [
+                "Multidisciplinary nature of environmental studies",
+                "Scope and importance",
+                "Need for public awareness"
+              ]
             }
           ]
         }
@@ -2767,7 +2782,9 @@ Return ONLY valid JSON matching this schema:
     }
   ]
 }
-Text:\n${rawText.slice(0, 120000)}`;
+
+Now extract the complete syllabus from this text following the exact rules and JSON schema above:
+${rawText.slice(0, 120000)}`;
 
   const models = ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
   let lastErr = null;
@@ -2779,7 +2796,7 @@ Text:\n${rawText.slice(0, 120000)}`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json' }
+          generationConfig: { responseMimeType: 'application/json', temperature: 0 }
         })
       }
     );
