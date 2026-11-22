@@ -2836,6 +2836,75 @@ async function extractPdfTextClient(file) {
 
 let pendingParsedSubjects = null;
 let pendingDetectedMeta = null;
+let pendingMatchReport = null;
+
+function normalizeTextKey(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function collectSubjectTopicsSet(sub) {
+  const set = new Set();
+  (sub.units || []).forEach((u) => {
+    (u.groups || []).forEach((g) => {
+      (g.topics || []).forEach((t) => set.add(normalizeTextKey(t)));
+    });
+  });
+  return set;
+}
+
+function analyzeMatchesForScan(subs, meta) {
+  let matchedCourse = null;
+  let matchedYear = null;
+  if (meta && meta.courseName) {
+    const cn = normalizeTextKey(meta.courseName);
+    matchedCourse = Object.values(COURSES).find(
+      (c) => normalizeTextKey(c.name) === cn || normalizeTextKey(c.fullName) === cn
+    ) || null;
+  }
+  if (matchedCourse && meta && meta.yearLabel) {
+    const yl = normalizeTextKey(meta.yearLabel);
+    matchedYear = Object.values(matchedCourse.years || {}).find(
+      (y) => normalizeTextKey(y.label) === yl || yl.includes(normalizeTextKey(y.shortLabel))
+    ) || null;
+  }
+
+  const subjectMatches = [];
+  if (matchedYear && Array.isArray(subs)) {
+    subs.forEach((newSub, idx) => {
+      const nName = normalizeTextKey(newSub.name).replace(/^\d+\s+/, '');
+      const nShort = normalizeTextKey(newSub.shortName);
+      const existingSub = (matchedYear.subjects || []).find((es) => {
+        const eName = normalizeTextKey(es.name).replace(/^\d+\s+/, '');
+        const eShort = normalizeTextKey(es.shortName);
+        return (nName && (eName === nName || eName.includes(nName) || nName.includes(eName))) || (nShort && eShort === nShort);
+      });
+      if (existingSub) {
+        const exSet = collectSubjectTopicsSet(existingSub);
+        let sameCount = 0;
+        const newTopics = [];
+        (newSub.units || []).forEach((u) => {
+          (u.groups || []).forEach((g) => {
+            (g.topics || []).forEach((t) => {
+              if (exSet.has(normalizeTextKey(t))) sameCount++;
+              else newTopics.push(t);
+            });
+          });
+        });
+        subjectMatches.push({
+          scannedIdx: idx,
+          scannedName: newSub.name,
+          existingId: existingSub.id,
+          existingName: existingSub.name,
+          sameCount,
+          newTopics
+        });
+      }
+    });
+  }
+
+  return { matchedCourse, matchedYear, subjectMatches };
+}
+
 
 function detectCourseAndYearFromText(rawText) {
   const sample = rawText.slice(0, 2500);
@@ -3091,13 +3160,48 @@ function renderAdminAddSyllabus() {
         <div style="font-weight:700;font-size:0.95rem;">Step 2: Confirm Course &amp; Year</div>
         <button type="button" id="btn-cancel-preview" class="btn btn-muted" style="padding:0.25rem 0.6rem;font-size:0.75rem;">✕ Cancel / Clear</button>
       </div>
-      <div id="add-detected-box" class="sem-notice-banner ${hasDetected ? '' : 'hidden'}" style="margin-top:0;margin-bottom:0.65rem;flex-direction:column;align-items:flex-start;gap:0.35rem;">
-        <div><strong>PDF me ye mila:</strong> Course: <strong>${escapeHtml(pendingDetectedMeta?.courseName || 'Not found')}</strong> &bull; Year/Sem: <strong>${escapeHtml(pendingDetectedMeta?.yearLabel || 'Not found')}</strong></div>
+      <div id="add-detected-box" class="sem-notice-banner ${hasDetected ? '' : 'hidden'}" style="margin-top:0;margin-bottom:0.65rem;flex-direction:column;align-items:flex-start;gap:0.4rem;">
+        <div>
+          <strong>PDF me ye mila:</strong>
+          Course: <strong>${escapeHtml(pendingDetectedMeta?.courseName || 'Not found')}</strong> &bull;
+          Year/Sem: <strong>${escapeHtml(pendingDetectedMeta?.yearLabel || 'Not found')}</strong>
+          ${pendingMatchReport?.matchedYear ? ' <span class="pill-cat" style="margin-left:0.3rem;">Already exists in website</span>' : ''}
+        </div>
         <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;cursor:pointer;">
           <input type="checkbox" id="chk-use-detected" ${hasDetected ? 'checked' : ''} />
-          <span>Yahi detected Course &amp; Year lagao (uncheck karke niche custom/existing choose kar sakte ho)</span>
+          <span>Detected Course &amp; Year me daalo (uncheck karke apni marzi se dusra/custom chuno)</span>
         </label>
       </div>
+      ${
+        pendingMatchReport && pendingMatchReport.subjectMatches && pendingMatchReport.subjectMatches.length
+          ? `<div class="warn-box" style="margin-top:0;margin-bottom:0.65rem;">
+              <div style="font-weight:700;margin-bottom:0.3rem;">Same Subject Already Found!</div>
+              ${pendingMatchReport.subjectMatches
+                .map(
+                  (m) => `
+                <div style="font-size:0.8rem;margin-bottom:0.35rem;">
+                  <strong>${escapeHtml(m.existingName)}</strong> me <strong>${m.sameCount}</strong> topics pehle se same hain, aur <strong>${m.newTopics.length}</strong> naye topics mile hain${
+                    m.newTopics.length
+                      ? `: <em>${m.newTopics.slice(0, 4).map(escapeHtml).join(', ')}${m.newTopics.length > 4 ? ' ...' : ''}</em>`
+                      : ' (koi naya topic nahi hai).'
+                  }
+                </div>
+              `
+                )
+                .join('')}
+              <div style="display:flex;flex-wrap:wrap;gap:0.85rem;margin-top:0.35rem;font-size:0.8rem;">
+                <label style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;">
+                  <input type="radio" name="merge-mode" value="merge_new" checked />
+                  <span>Purane subject me sirf naye topics add karo</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;">
+                  <input type="radio" name="merge-mode" value="add_new" />
+                  <span>Naya alag subject banao</span>
+                </label>
+              </div>
+            </div>`
+          : ''
+      }
 
       <div id="add-manual-target-wrap" class="${hasDetected ? 'hidden' : ''}" style="margin-bottom:0.75rem;">
         <label class="add-syl-label">Select Existing Course &amp; Year (or Create Custom):</label>
@@ -4086,6 +4190,7 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
   if (e.target.closest('#btn-cancel-preview')) {
     pendingParsedSubjects = null;
     pendingDetectedMeta = null;
+    pendingMatchReport = null;
     document.getElementById('add-preview-wrap')?.classList.add('hidden');
     const st = document.getElementById('add-parse-status');
     if (st) st.textContent = '';
@@ -4169,6 +4274,7 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
         setProg(100, 'Done!');
         pendingParsedSubjects = subs;
         pendingDetectedMeta = meta;
+        pendingMatchReport = analyzeMatchesForScan(subs, meta);
         renderAdminAddSyllabus();
         const newSt = document.getElementById('add-parse-status');
         if (newSt) {
@@ -4221,7 +4327,30 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
         if (matchedYear) {
           yId = matchedYear.id;
           yLabel = matchedYear.label;
-          subjectsToSave = [...(matchedYear.subjects || []), ...pendingParsedSubjects];
+          const mergeMode = document.querySelector('input[name="merge-mode"]:checked')?.value || 'add_new';
+          if (mergeMode === 'merge_new' && pendingMatchReport?.subjectMatches?.length) {
+            const cloned = JSON.parse(JSON.stringify(matchedYear.subjects || []));
+            pendingParsedSubjects.forEach((newSub, idx) => {
+              const m = pendingMatchReport.subjectMatches.find((x) => x.scannedIdx === idx);
+              if (!m) {
+                cloned.push(newSub);
+              } else if (m.newTopics.length > 0) {
+                const targetSub = cloned.find((es) => es.id === m.existingId);
+                if (targetSub) {
+                  const lastUnit = targetSub.units && targetSub.units[targetSub.units.length - 1];
+                  if (lastUnit && lastUnit.groups && lastUnit.groups.length) {
+                    lastUnit.groups.push({ name: 'Newly Added Topics', topics: m.newTopics });
+                  } else {
+                    targetSub.units = targetSub.units || [];
+                    targetSub.units.push({ id: `${targetSub.id}_u_new_${Date.now().toString(36)}`, title: 'Newly Added Topics', groups: [{ name: 'Topics', topics: m.newTopics }] });
+                  }
+                }
+              }
+            });
+            subjectsToSave = cloned;
+          } else {
+            subjectsToSave = [...(matchedYear.subjects || []), ...pendingParsedSubjects];
+          }
         } else {
           yId = `${cId}_${yLabel.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}`;
           subjectsToSave = pendingParsedSubjects;
