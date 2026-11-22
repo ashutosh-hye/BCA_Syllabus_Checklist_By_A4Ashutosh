@@ -1270,3 +1270,47 @@ body.dark .add-syl-input, body.dark .add-syl-textarea {
   border-color: #334155;
   color: #f1f5f9;
 }
+
+/* PDF Scan Progress Bar */
+.scan-progress-wrap {
+  margin-top: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.6rem;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+}
+.scan-progress-text {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #3730a3;
+  margin-bottom: 0.4rem;
+}
+.scan-progress-track {
+  width: 100%;
+  height: 0.45rem;
+  background: #e0e7ff;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+.scan-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4f46e5, #818cf8, #4f46e5);
+  background-size: 200% 100%;
+  animation: scanShimmer 1.3s linear infinite;
+  border-radius: 9999px;
+  transition: width 0.35s ease;
+}
+@keyframes scanShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+body.dark .scan-progress-wrap {
+  background: #1e1b4b;
+  border-color: #312e81;
+}
+body.dark .scan-progress-text {
+  color: #c7d2fe;
+}
+body.dark .scan-progress-track {
+  background: #0f172a;
+}

@@ -3067,11 +3067,20 @@ function renderAdminAddSyllabus() {
           Gemini AI Detect
         </button>
       </div>
+      <div id="add-scan-progress" class="scan-progress-wrap hidden">
+        <div id="add-scan-progress-text" class="scan-progress-text">Starting...</div>
+        <div class="scan-progress-track">
+          <div id="add-scan-progress-fill" class="scan-progress-fill" style="width: 15%;"></div>
+        </div>
+      </div>
       <div id="add-parse-status" class="unit-sub" style="margin-top:0.5rem;"></div>
     </div>
 
     <div id="add-preview-wrap" class="add-syl-card ${pendingParsedSubjects ? '' : 'hidden'}">
-      <div style="font-weight:700;font-size:0.95rem;margin-bottom:0.5rem;">Step 2: Confirm Course &amp; Year</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+        <div style="font-weight:700;font-size:0.95rem;">Step 2: Confirm Course &amp; Year</div>
+        <button type="button" id="btn-cancel-preview" class="btn btn-muted" style="padding:0.25rem 0.6rem;font-size:0.75rem;">✕ Cancel / Clear</button>
+      </div>
       <div id="add-detected-box" class="sem-notice-banner ${hasDetected ? '' : 'hidden'}" style="margin-top:0;margin-bottom:0.65rem;flex-direction:column;align-items:flex-start;gap:0.35rem;">
         <div><strong>PDF me ye mila:</strong> Course: <strong>${escapeHtml(pendingDetectedMeta?.courseName || 'Not found')}</strong> &bull; Year/Sem: <strong>${escapeHtml(pendingDetectedMeta?.yearLabel || 'Not found')}</strong></div>
         <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;cursor:pointer;">
@@ -4064,59 +4073,115 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
     return;
   }
 
-  if (e.target.closest('#btn-read-pdf-ai')) {
+  if (e.target.closest('#btn-cancel-preview')) {
+    pendingParsedSubjects = null;
+    pendingDetectedMeta = null;
+    document.getElementById('add-preview-wrap')?.classList.add('hidden');
+    const st = document.getElementById('add-parse-status');
+    if (st) st.textContent = '';
+    showToast('Preview cleared');
+    return;
+  }
+
+  const startPdfScan = (useAi) => {
     const fileInput = document.getElementById('add-pdf-file');
     const statusEl = document.getElementById('add-parse-status');
+    const progWrap = document.getElementById('add-scan-progress');
+    const progText = document.getElementById('add-scan-progress-text');
+    const progFill = document.getElementById('add-scan-progress-fill');
+    const previewWrap = document.getElementById('add-preview-wrap');
+    const btnFree = document.getElementById('btn-read-pdf-free');
+    const btnAi = document.getElementById('btn-read-pdf-ai');
+
     const file = fileInput && fileInput.files && fileInput.files[0];
-    if (!file) { statusEl.textContent = 'Pehle ek PDF file select karo.'; return; }
+    if (!file) {
+      statusEl.className = 'sync-error';
+      statusEl.textContent = 'Pehle ek PDF file select karo.';
+      return;
+    }
+
     const apiKey = (document.getElementById('add-gemini-key')?.value || '').trim() || cachedAdminGeminiKey;
-    if (!apiKey) {
+    if (useAi && !apiKey) {
       document.getElementById('admin-key-box')?.classList.remove('hidden');
+      statusEl.className = 'sync-error';
       statusEl.textContent = 'Pehle upar "Set Gemini Key" me apni key daal kar Save karo.';
       return;
     }
-    statusEl.textContent = 'Gemini AI se PDF samjhi ja rahi hai...';
+
+    // Clear old preview immediately so user knows fresh scan is running
+    pendingParsedSubjects = null;
+    pendingDetectedMeta = null;
+    if (previewWrap) previewWrap.classList.add('hidden');
+    statusEl.className = 'unit-sub';
+    statusEl.textContent = '';
+
+    const setProg = (pct, msg) => {
+      if (progWrap) progWrap.classList.remove('hidden');
+      if (progFill) progFill.style.width = `${pct}%`;
+      if (progText) progText.textContent = msg;
+    };
+
+    if (btnFree) btnFree.disabled = true;
+    if (btnAi) btnAi.disabled = true;
+    setProg(20, 'Opening PDF & reading pages...');
+
+    const subName = (document.getElementById('add-subject-name')?.value || '').trim();
+
     extractPdfTextClient(file)
-      .then((txt) => parseWithGeminiApi(apiKey, txt))
-      .then((res) => {
-        const subs = Array.isArray(res) ? res : (res.subjects || []);
-        if (!subs.length) throw new Error('Gemini AI ko is PDF me subjects nahi mile.');
-        pendingParsedSubjects = subs;
-        pendingDetectedMeta = {
-          courseName: (!Array.isArray(res) && res.courseName) || '',
-          yearLabel: (!Array.isArray(res) && res.yearLabel) || ''
-        };
-        renderAdminAddSyllabus();
-        document.getElementById('add-parse-status').textContent = `AI Ready! ${subs.length} subject(s) cleanly extract ho gaya.`;
+      .then((txt) => {
+        if (!txt || !txt.trim()) {
+          throw new Error('PDF me readable text nahi mila (agar scanned photo PDF hai to browser read nahi kar payega).');
+        }
+        if (useAi) {
+          setProg(65, 'Gemini AI reading & structuring Units, Chapters & Topics...');
+          return parseWithGeminiApi(apiKey, txt).then((res) => {
+            const subs = Array.isArray(res) ? res : (res.subjects || []);
+            if (!subs.length) throw new Error('Gemini AI ko is PDF me subjects nahi mile.');
+            return {
+              subs,
+              meta: {
+                courseName: (!Array.isArray(res) && res.courseName) || '',
+                yearLabel: (!Array.isArray(res) && res.yearLabel) || ''
+              }
+            };
+          });
+        } else {
+          setProg(70, 'Extracting Units, Chapters & Topics...');
+          const subs = parsePlainTextSyllabus(txt, subName);
+          if (!subs.length) throw new Error('Free scan se Units/Topics nahi mile. "Gemini AI Detect" try karo.');
+          return {
+            subs,
+            meta: detectCourseAndYearFromText(txt)
+          };
+        }
       })
-      .catch((err) => { statusEl.textContent = err.message || 'AI parse failed.'; });
+      .then(({ subs, meta }) => {
+        setProg(100, 'Done!');
+        pendingParsedSubjects = subs;
+        pendingDetectedMeta = meta;
+        renderAdminAddSyllabus();
+        const newSt = document.getElementById('add-parse-status');
+        if (newSt) {
+          newSt.className = 'unit-sub';
+          newSt.textContent = `${useAi ? 'Gemini AI' : 'Auto-Detect'} complete! ${subs.length} subject(s) ready.`;
+        }
+      })
+      .catch((err) => {
+        if (progWrap) progWrap.classList.add('hidden');
+        if (btnFree) btnFree.disabled = false;
+        if (btnAi) btnAi.disabled = false;
+        statusEl.className = 'sync-error';
+        statusEl.textContent = `Error: ${err.message || 'Scan failed. Internet ya API key check karo.'}`;
+      });
+  };
+
+  if (e.target.closest('#btn-read-pdf-ai')) {
+    startPdfScan(true);
     return;
   }
 
   if (e.target.closest('#btn-read-pdf-free')) {
-    const fileInput = document.getElementById('add-pdf-file');
-    const statusEl = document.getElementById('add-parse-status');
-    const file = fileInput && fileInput.files && fileInput.files[0];
-    if (!file) {
-      statusEl.textContent = 'Pehle ek PDF file select karo.';
-      return;
-    }
-    const subName = (document.getElementById('add-subject-name')?.value || '').trim();
-    statusEl.textContent = 'PDF read ho rahi hai...';
-    extractPdfTextClient(file)
-      .then((txt) => {
-        const parsed = parsePlainTextSyllabus(txt, subName);
-        if (!Array.isArray(parsed) || !parsed.length) {
-          throw new Error('Is PDF se Units/Topics extract nahi ho paye.');
-        }
-        pendingParsedSubjects = parsed;
-        pendingDetectedMeta = detectCourseAndYearFromText(txt);
-        renderAdminAddSyllabus();
-        document.getElementById('add-parse-status').textContent = `Ready! ${parsed.length} subject(s) extract ho gaya. Niche Step 2 & 3 check karo.`;
-      })
-      .catch((err) => {
-        statusEl.textContent = err.message || 'PDF read failed.';
-      });
+    startPdfScan(false);
     return;
   }
 
