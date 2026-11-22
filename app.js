@@ -2769,24 +2769,34 @@ Return ONLY valid JSON matching this schema:
 }
 Text:\n${rawText.slice(0, 120000)}`;
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: 'application/json' }
-      })
+  const models = ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+  let lastErr = null;
+  for (const model of models) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: 'application/json' }
+        })
+      }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      const txt = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+      return JSON.parse(txt);
     }
-  );
-  if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error((err.error && err.error.message) || `Gemini API error (${res.status})`);
+    const msg = (err.error && err.error.message) || `Gemini API error (${res.status})`;
+    lastErr = new Error(msg);
+    if (res.status === 503 || res.status === 429 || res.status === 404 || /high demand|overloaded|unavailable/i.test(msg)) {
+      continue;
+    }
+    throw lastErr;
   }
-  const data = await res.json();
-  const txt = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-  return JSON.parse(txt);
+  throw lastErr || new Error('All Gemini models are currently busy. Try again in a minute.');
 }
 
 async function extractPdfTextClient(file) {
