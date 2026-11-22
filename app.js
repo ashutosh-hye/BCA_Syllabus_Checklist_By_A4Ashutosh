@@ -498,6 +498,18 @@ const YEAR_2_SEM_3_SUBJECTS = [
               'Exception Handling',
               'Multithreaded Programming'
             ]
+          },
+          {
+            name: 'Applets, AWT & String Handling',
+            topics: [
+              'Java Applets',
+              'How to Run an Applet',
+              'AWT Controls – Button, Label, Combo, List',
+              'Event Listeners',
+              'Menu Bar',
+              'Layout Manager',
+              'String Handling (only main functions)'
+            ]
           }
         ]
       },
