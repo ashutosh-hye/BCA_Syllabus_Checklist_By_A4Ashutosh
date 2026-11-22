@@ -2870,16 +2870,17 @@ function collectSubjectTopicsSet(sub) {
   return set;
 }
 
-function analyzeMatchesForScan(subs, meta) {
-  let matchedCourse = null;
-  let matchedYear = null;
-  if (meta && meta.courseName) {
+function analyzeMatchesForScan(subs, meta, forcedCourse, forcedYear) {
+  let matchedCourse = forcedCourse || null;
+  let matchedYear = forcedYear || null;
+
+  if (!matchedCourse && meta && meta.courseName) {
     const cn = normalizeTextKey(meta.courseName);
     matchedCourse = Object.values(COURSES).find(
       (c) => normalizeTextKey(c.name) === cn || normalizeTextKey(c.fullName) === cn
     ) || null;
   }
-  if (matchedCourse && meta && meta.yearLabel) {
+  if (matchedCourse && !matchedYear && meta && meta.yearLabel) {
     const yl = normalizeTextKey(meta.yearLabel);
     matchedYear = Object.values(matchedCourse.years || {}).find(
       (y) => normalizeTextKey(y.label) === yl || yl.includes(normalizeTextKey(y.shortLabel))
@@ -2887,120 +2888,64 @@ function analyzeMatchesForScan(subs, meta) {
   }
 
   const subjectMatches = [];
-  if (matchedYear && Array.isArray(subs)) {
-    subs.forEach((newSub, idx) => {
-      const nName = normalizeTextKey(newSub.name).replace(/^\d+\s+/, '');
-      const nShort = normalizeTextKey(newSub.shortName);
-      const existingSub = (matchedYear.subjects || []).find((es) => {
-        const eName = normalizeTextKey(es.name).replace(/^\d+\s+/, '');
-        const eShort = normalizeTextKey(es.shortName);
-        return (nName && (eName === nName || eName.includes(nName) || nName.includes(eName))) || (nShort && eShort === nShort);
+  const compareSubjectInYear = (newSub, idx, cObj, yObj) => {
+    const nName = normalizeTextKey(newSub.name).replace(/^\d+\s+/, '');
+    const nShort = normalizeTextKey(newSub.shortName);
+    const existingSub = (yObj.subjects || []).find((es) => {
+      const eName = normalizeTextKey(es.name).replace(/^\d+\s+/, '');
+      const eShort = normalizeTextKey(es.shortName);
+      return (nName && (eName === nName || eName.includes(nName) || nName.includes(eName))) || (nShort && eShort === nShort);
+    });
+    if (!existingSub) return null;
+    const exSet = collectSubjectTopicsSet(existingSub);
+    let sameCount = 0;
+    const newTopics = [];
+    (newSub.units || []).forEach((u) => {
+      (u.groups || []).forEach((g) => {
+        (g.topics || []).forEach((t) => {
+          if (exSet.has(normalizeTextKey(t))) sameCount++;
+          else newTopics.push(t);
+        });
       });
-      if (existingSub) {
-        const exSet = collectSubjectTopicsSet(existingSub);
-        let sameCount = 0;
-        const newTopics = [];
-        (newSub.units || []).forEach((u) => {
-          (u.groups || []).forEach((g) => {
-            (g.topics || []).forEach((t) => {
-              if (exSet.has(normalizeTextKey(t))) sameCount++;
-              else newTopics.push(t);
-            });
-          });
-        });
-        subjectMatches.push({
-          scannedIdx: idx,
-          scannedName: newSub.name,
-          existingId: existingSub.id,
-          existingName: existingSub.name,
-          sameCount,
-          newTopics
-        });
+    });
+    return {
+      scannedIdx: idx,
+      scannedName: newSub.name,
+      courseId: cObj.id,
+      courseName: cObj.name,
+      yearId: yObj.id,
+      yearLabel: yObj.label,
+      existingId: existingSub.id,
+      existingName: existingSub.name,
+      sameCount,
+      newTopics
+    };
+  };
+
+  if (Array.isArray(subs)) {
+    subs.forEach((newSub, idx) => {
+      if (matchedCourse && matchedYear) {
+        const m = compareSubjectInYear(newSub, idx, matchedCourse, matchedYear);
+        if (m) subjectMatches.push(m);
+      } else {
+        // Search across ALL courses and years to find where this subject already exists!
+        for (const cObj of Object.values(COURSES)) {
+          for (const yObj of Object.values(cObj.years || {})) {
+            const m = compareSubjectInYear(newSub, idx, cObj, yObj);
+            if (m) {
+              subjectMatches.push(m);
+              if (!matchedCourse) matchedCourse = cObj;
+              if (!matchedYear) matchedYear = yObj;
+              break;
+            }
+          }
+          if (matchedYear) break;
+        }
       }
     });
   }
 
   return { matchedCourse, matchedYear, subjectMatches };
-}
-
-
-function detectCourseAndYearFromText(rawText) {
-  const sample = rawText.slice(0, 2500);
-  const coursePatterns = [
-    { re: /\b(B\.?\s*Com\.?(?:\s*\(Hons\.?\))?)\b/i, name: 'B.Com' },
-    { re: /\b(B\.?\s*C\.?\s*A\.?)\b/i, name: 'BCA' },
-    { re: /\b(B\.?\s*B\.?\s*A\.?)\b/i, name: 'BBA' },
-    { re: /\b(M\.?\s*C\.?\s*A\.?)\b/i, name: 'MCA' },
-    { re: /\b(M\.?\s*B\.?\s*A\.?)\b/i, name: 'MBA' },
-    { re: /\b(B\.?\s*Tech\.?)\b/i, name: 'B.Tech' },
-    { re: /\b(B\.?\s*Sc\.?)\b/i, name: 'B.Sc' },
-    { re: /\b(B\.?\s*A\.?)\b/i, name: 'B.A.' }
-  ];
-  let courseName = '';
-  for (const p of coursePatterns) {
-    const m = sample.match(p.re);
-    if (m) { courseName = p.name; break; }
-  }
-  if (/delhi university|university of delhi/i.test(sample) && courseName === 'B.Com') {
-    courseName = 'DU B.Com';
-  }
-
-  let yearPart = '';
-  const yrMatch = sample.match(/\b(1st|2nd|3rd|4th|First|Second|Third|Fourth)\s+Year\b/i);
-  if (yrMatch) {
-    const map = { first: '1st', second: '2nd', third: '3rd', fourth: '4th' };
-    const normYr = map[yrMatch[1].toLowerCase()] || yrMatch[1];
-    yearPart = `${normYr} Year`;
-  }
-
-  let semPart = '';
-  const semMatch = sample.match(/\b(?:Semester|Sem\.?)\s*[-:]?\s*(I{1,3}V?|V?I{0,3}|[1-8])\b/i)
-    || sample.match(/\b(1st|2nd|3rd|4th|5th|6th|7th|8th)\s+Semester\b/i);
-  if (semMatch) {
-    semPart = `Semester ${semMatch[1].toUpperCase()}`;
-  }
-
-  let yearLabel = '';
-  if (yearPart && semPart) yearLabel = `${yearPart} (${semPart})`;
-  else if (yearPart) yearLabel = yearPart;
-  else if (semPart) yearLabel = semPart;
-
-  return { courseName, yearLabel };
-}
-
-
-function renderVisualPreviewHtml(subjects) {
-  if (!subjects || !subjects.length) return '';
-  return subjects
-    .map((sub) => {
-      const unitsHtml = (sub.units || [])
-        .map((u) => {
-          const chapsHtml = (u.groups || [])
-            .map(
-              (g) => `
-              <div style="margin-top:0.25rem;padding-left:0.5rem;">
-                <div style="font-size:0.76rem;font-weight:700;color:#4f46e5;">${escapeHtml(g.name)} (${(g.topics || []).length})</div>
-                <div style="font-size:0.74rem;color:#64748b;">${(g.topics || []).slice(0, 4).map(escapeHtml).join(' • ')}${(g.topics || []).length > 4 ? ' ...' : ''}</div>
-              </div>
-            `
-            )
-            .join('');
-          return `
-            <div style="margin-top:0.35rem;padding-top:0.35rem;border-top:1px dashed #cbd5e1;">
-              <div style="font-size:0.8rem;font-weight:700;">${escapeHtml(u.title)}</div>
-              ${chapsHtml}
-            </div>
-          `;
-        })
-        .join('');
-      return `
-        <div class="admin-user-card" style="margin-top:0.5rem;">
-          <div style="font-weight:700;font-size:0.9rem;">${escapeHtml(sub.name)} <span class="pill-code">${escapeHtml(sub.code || '')}</span></div>
-          ${unitsHtml}
-        </div>
-      `;
-    })
-    .join('');
 }
 
 function renderYearEditorHtml() {
@@ -3284,7 +3229,19 @@ function renderAdminAddSyllabus() {
   const newFields = document.getElementById('add-new-course-fields');
   if (sel && newFields) {
     sel.addEventListener('change', () => {
-      newFields.classList.toggle('hidden', sel.value !== '__new__');
+      const val = sel.value;
+      newFields.classList.toggle('hidden', val !== '__new__');
+      if (val && val !== '__new__' && val.includes('::') && pendingParsedSubjects) {
+        const [cId, yId] = val.split('::');
+        const cObj = COURSES[cId];
+        const yObj = cObj && cObj.years[yId];
+        if (cObj && yObj) {
+          pendingMatchReport = analyzeMatchesForScan(pendingParsedSubjects, pendingDetectedMeta, cObj, yObj);
+          renderAdminAddSyllabus();
+          const newSel = document.getElementById('add-target-select');
+          if (newSel) newSel.value = val;
+        }
+      }
     });
   }
 }
@@ -3312,6 +3269,7 @@ function loadAdminDashboard() {
       : fbDb.collection('users').where('email', 'in', scope).get();
   queryPromise
     .then((snap) => {
+      if (adminDashboardMode !== 'students') return;
       adminUsersCache = [];
       adminDetailState = null;
       const grouped = {};
@@ -4317,8 +4275,11 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
       .then(({ subs, meta }) => {
         setProg(100, 'Done!');
         pendingParsedSubjects = subs;
-        pendingDetectedMeta = meta;
         pendingMatchReport = analyzeMatchesForScan(subs, meta);
+        pendingDetectedMeta = {
+          courseName: meta.courseName || (pendingMatchReport.matchedCourse ? pendingMatchReport.matchedCourse.name : ''),
+          yearLabel: meta.yearLabel || (pendingMatchReport.matchedYear ? pendingMatchReport.matchedYear.label : '')
+        };
         renderAdminAddSyllabus();
         const newSt = document.getElementById('add-parse-status');
         if (newSt) {
