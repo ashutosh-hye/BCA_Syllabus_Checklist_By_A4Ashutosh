@@ -1902,6 +1902,8 @@ let adminDetailState = null;
 let adminDashboardMode = 'students';
 let previewDraftState = null;
 let editingCourseMeta = null;
+let editingSubjectsDraft = null;
+let expandedEditSubIdx = null;
 
 function normalizeCourseYear(course, year) {
   if (year === 'year1') return { course: 'bca', year: 'bca_y1' };
@@ -2556,9 +2558,9 @@ function renderAdminStudentDetail(idx, filter) {
 
 function updateAdminModeTabs() {
   const tabsEl = document.getElementById('admin-mode-tabs');
-  const addTabBtn = document.getElementById('btn-admin-add-tab');
   const descEl = document.querySelector('#admin-modal .modal-desc');
   const allowSyl = canAdminViewAllSyllabus(currentUser);
+  const addTabBtn = document.getElementById('btn-admin-add-tab');
   const allowAdd = canAdminAddSyllabus(currentUser);
   if (addTabBtn) addTabBtn.classList.toggle('hidden', !allowAdd);
   if (!allowAdd && adminDashboardMode === 'add') adminDashboardMode = 'students';
@@ -2849,6 +2851,82 @@ function renderVisualPreviewHtml(subjects) {
     .join('');
 }
 
+function renderYearEditorHtml() {
+  if (!editingCourseMeta || !Array.isArray(editingSubjectsDraft)) return '';
+  const subsHtml = editingSubjectsDraft
+    .map((sub, si) => {
+      const isOpen = expandedEditSubIdx === si;
+      const unitsHtml = isOpen
+        ? (sub.units || [])
+            .map((u, ui) => {
+              const groupsHtml = (u.groups || [])
+                .map(
+                  (g, gi) => `
+                  <div style="margin-top:0.5rem;padding:0.5rem;border:1px solid #cbd5e1;border-radius:0.5rem;">
+                    <div style="display:flex;gap:0.4rem;align-items:center;margin-bottom:0.35rem;">
+                      <input type="text" class="add-syl-input" data-edit-group-name="${si}:${ui}:${gi}" value="${escapeHtml(g.name || '')}" placeholder="Chapter / Lesson name" />
+                      <button type="button" data-del-edit-group="${si}:${ui}:${gi}" class="btn btn-danger-soft" style="padding:0.3rem 0.55rem;">Del Chapter</button>
+                    </div>
+                    <label class="add-syl-label">Topics (one per line):</label>
+                    <textarea class="add-syl-textarea" style="min-height:85px;" data-edit-group-topics="${si}:${ui}:${gi}">${escapeHtml((g.topics || []).join('\n'))}</textarea>
+                  </div>
+                `
+                )
+                .join('');
+              return `
+                <div style="margin-top:0.6rem;padding:0.65rem;border:1px solid #94a3b8;border-radius:0.6rem;">
+                  <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">
+                    <input type="text" class="add-syl-input" style="flex:1;" data-edit-unit-title="${si}:${ui}" value="${escapeHtml(u.title || '')}" placeholder="Unit title" />
+                    <button type="button" data-add-edit-group="${si}:${ui}" class="btn btn-outline" style="padding:0.3rem 0.6rem;">+ Chapter</button>
+                    <button type="button" data-del-edit-unit="${si}:${ui}" class="btn btn-danger-soft" style="padding:0.3rem 0.6rem;">Del Unit</button>
+                  </div>
+                  ${groupsHtml}
+                </div>
+              `;
+            })
+            .join('')
+        : '';
+
+      return `
+        <div class="admin-user-card" style="margin-top:0.55rem;">
+          <div style="display:flex;gap:0.45rem;align-items:center;flex-wrap:wrap;">
+            <input type="text" class="add-syl-input" style="flex:2;min-width:160px;" data-edit-sub-name="${si}" value="${escapeHtml(sub.name || '')}" placeholder="Subject Name" />
+            <input type="text" class="add-syl-input" style="flex:1;min-width:90px;" data-edit-sub-code="${si}" value="${escapeHtml(sub.code || '')}" placeholder="Code" />
+            <button type="button" data-toggle-edit-sub="${si}" class="btn btn-outline">${isOpen ? 'Close Units ▲' : `Edit Units (${(sub.units || []).length}) ▼`}</button>
+            <button type="button" data-del-edit-sub="${si}" class="btn btn-danger-soft">Delete Subject</button>
+          </div>
+          ${
+            isOpen
+              ? `<div style="margin-top:0.5rem;">
+                   ${unitsHtml}
+                   <button type="button" data-add-edit-unit="${si}" class="btn btn-outline" style="margin-top:0.5rem;">+ Add Unit</button>
+                 </div>`
+              : ''
+          }
+        </div>
+      `;
+    })
+    .join('');
+
+  return `
+    <div class="add-syl-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+        <div>
+          <div style="font-weight:700;font-size:1rem;">Editing: ${escapeHtml(editingCourseMeta.courseName)} — ${escapeHtml(editingCourseMeta.yearLabel)}</div>
+          <div class="unit-sub">Edit or delete any Subject, Unit, Chapter, or Topic below, then click Save Changes.</div>
+        </div>
+        <div style="display:flex;gap:0.45rem;flex-wrap:wrap;">
+          <button type="button" id="btn-cancel-edit-syl" class="btn btn-muted">Cancel</button>
+          <button type="button" id="btn-save-edited-year" class="btn btn-primary">Save Changes</button>
+        </div>
+      </div>
+      <div style="margin-top:0.65rem;">
+        ${subsHtml || '<p class="unit-sub">No subjects left in this year.</p>'}
+      </div>
+    </div>
+  `;
+}
+
 function renderAdminAddSyllabus() {
   const container = document.getElementById('admin-year-containers');
   updateAdminModeTabs();
@@ -2857,16 +2935,17 @@ function renderAdminAddSyllabus() {
     return;
   }
 
+  if (editingCourseMeta && Array.isArray(editingSubjectsDraft)) {
+    container.innerHTML = renderYearEditorHtml();
+    return;
+  }
+
   let savedKey = '';
   try {
     savedKey = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
   } catch (e) {}
 
-  const preCourseName = editingCourseMeta ? editingCourseMeta.courseName : '';
-  const preYearLabel = editingCourseMeta ? editingCourseMeta.yearLabel : '';
-
   const customCoursesHtml = Object.values(COURSES)
-    .filter((c) => c.isCustom || c.hasCustomDoc)
     .map((c) => {
       const yearsRows = Object.values(c.years || {})
         .map(
@@ -2881,9 +2960,9 @@ function renderAdminAddSyllabus() {
             </div>
             <div style="display:flex;gap:0.35rem;flex-wrap:wrap;">
               <button type="button" data-preview-course="${escapeHtml(c.id)}" data-preview-year="${escapeHtml(y.id)}" class="btn btn-outline">Preview</button>
-              <button type="button" data-edit-course="${escapeHtml(c.id)}" data-edit-year="${escapeHtml(y.id)}" class="btn btn-outline">Edit</button>
-              <button type="button" data-toggle-publish-course="${escapeHtml(c.id)}" data-toggle-publish-year="${escapeHtml(y.id)}" class="btn ${y.isDraft ? 'btn-primary' : 'btn-muted'}">${y.isDraft ? 'Publish' : 'Hide'}</button>
-              <button type="button" data-delete-custom-year="${escapeHtml(c.id)}" data-year-id="${escapeHtml(y.id)}" class="btn btn-danger-soft">Delete</button>
+              <button type="button" data-edit-course="${escapeHtml(c.id)}" data-edit-year="${escapeHtml(y.id)}" class="btn btn-outline">Edit Subjects/Units</button>
+              ${c.isCustom || !['bca_y1', 'bca_y2', 'bcom_y1'].includes(y.id) ? `<button type="button" data-toggle-publish-course="${escapeHtml(c.id)}" data-toggle-publish-year="${escapeHtml(y.id)}" class="btn ${y.isDraft ? 'btn-primary' : 'btn-muted'}">${y.isDraft ? 'Publish' : 'Hide'}</button>` : ''}
+              ${!['bca_y1', 'bca_y2', 'bcom_y1'].includes(y.id) ? `<button type="button" data-delete-custom-year="${escapeHtml(c.id)}" data-year-id="${escapeHtml(y.id)}" class="btn btn-danger-soft">Delete Year</button>` : ''}
             </div>
           </div>
         `
@@ -2891,17 +2970,14 @@ function renderAdminAddSyllabus() {
         .join('');
       return `
         <div class="admin-user-card" style="margin-top:0.5rem;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem;">
-            <span style="font-weight:700;font-size:0.92rem;">${escapeHtml(c.fullName || c.name)}</span>
-            <button type="button" data-reset-custom-doc="${escapeHtml(c.id)}" class="btn btn-danger-soft" style="padding:0.2rem 0.5rem;font-size:0.72rem;">Remove Custom Data</button>
-          </div>
+          <div style="font-weight:700;font-size:0.92rem;margin-bottom:0.35rem;">${escapeHtml(c.fullName || c.name)}</div>
           ${yearsRows}
         </div>
       `;
     })
     .join('');
 
-  const targetOptions = [];
+  const targetOptions = ['<option value="">-- Select Course &amp; Year --</option>'];
   Object.entries(COURSES).forEach(([cId, cObj]) => {
     Object.entries(cObj.years || {}).forEach(([yId, yObj]) => {
       targetOptions.push(`<option value="${escapeHtml(cId)}::${escapeHtml(yId)}">${escapeHtml(cObj.name)} — ${escapeHtml(yObj.label)}</option>`);
@@ -2911,24 +2987,21 @@ function renderAdminAddSyllabus() {
 
   container.innerHTML = `
     <div class="add-syl-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
-        <div style="font-weight:700;font-size:0.95rem;">${editingCourseMeta ? 'Editing Syllabus' : 'Step 1: Choose Course &amp; Year'}</div>
-        ${editingCourseMeta ? '<button type="button" id="btn-cancel-edit-syl" class="btn btn-muted" style="padding:0.25rem 0.6rem;font-size:0.75rem;">Cancel Edit</button>' : ''}
-      </div>
+      <div style="font-weight:700;font-size:0.95rem;">Step 1: Choose Course &amp; Year</div>
       <div style="margin-top:0.5rem;">
-        <label class="add-syl-label">Add Subject To:</label>
-        <select id="add-target-select" class="add-syl-input" ${editingCourseMeta ? 'disabled' : ''}>
+        <label class="add-syl-label">Where should this subject be added?</label>
+        <select id="add-target-select" class="add-syl-input">
           ${targetOptions.join('')}
         </select>
       </div>
       <div id="add-new-course-fields" class="add-syl-grid hidden" style="margin-top:0.6rem;">
         <div>
           <label class="add-syl-label">New Course Name</label>
-          <input id="add-course-name" class="add-syl-input" value="${escapeHtml(preCourseName)}" placeholder="e.g. RMLAU B.Com" />
+          <input id="add-course-name" class="add-syl-input" placeholder="e.g. RMLAU B.Com" />
         </div>
         <div>
           <label class="add-syl-label">New Year &amp; Semester</label>
-          <input id="add-year-label" class="add-syl-input" value="${escapeHtml(preYearLabel)}" placeholder="e.g. 1st Year (Semester I)" />
+          <input id="add-year-label" class="add-syl-input" placeholder="e.g. 1st Year (Semester I)" />
         </div>
       </div>
     </div>
@@ -2938,7 +3011,7 @@ function renderAdminAddSyllabus() {
       <div class="add-syl-grid" style="margin-top:0.5rem;">
         <div>
           <label class="add-syl-label">Subject Name (for Free Auto-Parse)</label>
-          <input id="add-subject-name" class="add-syl-input" placeholder="e.g. Financial Accounting" />
+          <input id="add-subject-name" class="add-syl-input" placeholder="Auto-detected from PDF if blank" />
         </div>
         <div>
           <label class="add-syl-label">Gemini API Key (saved securely in your Admin account)</label>
@@ -2969,11 +3042,10 @@ function renderAdminAddSyllabus() {
       </div>
     </div>
 
-    ${
-      customCoursesHtml
-        ? `<div class="add-syl-card"><div style="font-weight:700;font-size:0.95rem;margin-bottom:0.4rem;">Manage Added Courses &amp; Drafts</div>${customCoursesHtml}</div>`
-        : ''
-    }
+    <div class="add-syl-card">
+      <div style="font-weight:700;font-size:0.95rem;margin-bottom:0.4rem;">Manage Courses &amp; Edit Any Subject/Unit</div>
+      ${customCoursesHtml}
+    </div>
   `;
 
   const sel = document.getElementById('add-target-select');
@@ -3965,7 +4037,12 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
 
   const saveCustomCourse = (isDraft, openPreviewAfter) => {
     if (!fbDb || !canAdminAddSyllabus(currentUser)) return;
-    const targetVal = document.getElementById('add-target-select') ? document.getElementById('add-target-select').value : '__new__';
+    const targetVal = document.getElementById('add-target-select') ? document.getElementById('add-target-select').value : '';
+    if (!editingCourseMeta && !targetVal) {
+      document.getElementById('add-parse-status').textContent = 'Step 1 me pehle Course & Year select karo!';
+      showToast('Select Course & Year in Step 1 first');
+      return;
+    }
     const statusEl = document.getElementById('add-parse-status');
     if (!pendingParsedSubjects || !pendingParsedSubjects.length) {
       statusEl.textContent = 'Pehle Step 2 me PDF read karo.';
@@ -4071,6 +4148,138 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
     return;
   }
 
+  const syncEditorDraftFromDom = () => {
+    if (!Array.isArray(editingSubjectsDraft)) return;
+    document.querySelectorAll('[data-edit-sub-name]').forEach((inp) => {
+      const si = parseInt(inp.getAttribute('data-edit-sub-name'), 10);
+      if (editingSubjectsDraft[si]) {
+        editingSubjectsDraft[si].name = inp.value.trim();
+        editingSubjectsDraft[si].shortName = inp.value.trim().slice(0, 22);
+      }
+    });
+    document.querySelectorAll('[data-edit-sub-code]').forEach((inp) => {
+      const si = parseInt(inp.getAttribute('data-edit-sub-code'), 10);
+      if (editingSubjectsDraft[si]) editingSubjectsDraft[si].code = inp.value.trim();
+    });
+    document.querySelectorAll('[data-edit-unit-title]').forEach((inp) => {
+      const [si, ui] = inp.getAttribute('data-edit-unit-title').split(':').map(Number);
+      if (editingSubjectsDraft[si]?.units?.[ui]) editingSubjectsDraft[si].units[ui].title = inp.value.trim();
+    });
+    document.querySelectorAll('[data-edit-group-name]').forEach((inp) => {
+      const [si, ui, gi] = inp.getAttribute('data-edit-group-name').split(':').map(Number);
+      if (editingSubjectsDraft[si]?.units?.[ui]?.groups?.[gi]) editingSubjectsDraft[si].units[ui].groups[gi].name = inp.value.trim();
+    });
+    document.querySelectorAll('[data-edit-group-topics]').forEach((ta) => {
+      const [si, ui, gi] = ta.getAttribute('data-edit-group-topics').split(':').map(Number);
+      if (editingSubjectsDraft[si]?.units?.[ui]?.groups?.[gi]) {
+        editingSubjectsDraft[si].units[ui].groups[gi].topics = ta.value.split(/\r?\n/).map((t) => t.trim()).filter(Boolean);
+      }
+    });
+  };
+
+  if (e.target.closest('#btn-cancel-edit-syl')) {
+    editingCourseMeta = null;
+    editingSubjectsDraft = null;
+    expandedEditSubIdx = null;
+    renderAdminAddSyllabus();
+    return;
+  }
+
+  if (e.target.closest('#btn-save-edited-year') && fbDb && editingCourseMeta) {
+    syncEditorDraftFromDom();
+    const { courseId, yearId } = editingCourseMeta;
+    const cObj = COURSES[courseId];
+    const yObj = cObj && cObj.years[yearId];
+    if (cObj && yObj) {
+      const updatedYear = { ...yObj, subjects: editingSubjectsDraft };
+      const updatedYears = { ...cObj.years, [yearId]: updatedYear };
+      fbDb.collection('courses').doc(courseId).set({
+        id: courseId,
+        name: cObj.name,
+        fullName: cObj.fullName || cObj.name,
+        defaultYear: cObj.defaultYear,
+        years: updatedYears,
+        updatedAt: new Date().toISOString()
+      }, { merge: true }).then(() => {
+        COURSES[courseId].years[yearId] = updatedYear;
+        editingCourseMeta = null;
+        editingSubjectsDraft = null;
+        expandedEditSubIdx = null;
+        updateYearUI();
+        render();
+        renderAdminAddSyllabus();
+        showToast('Changes saved!');
+      }).catch((err) => showToast(err.message || 'Save failed'));
+    }
+    return;
+  }
+
+  const toggleEditSub = e.target.closest('[data-toggle-edit-sub]');
+  if (toggleEditSub) {
+    syncEditorDraftFromDom();
+    const si = parseInt(toggleEditSub.getAttribute('data-toggle-edit-sub'), 10);
+    expandedEditSubIdx = expandedEditSubIdx === si ? null : si;
+    renderAdminAddSyllabus();
+    return;
+  }
+
+  const delEditSub = e.target.closest('[data-del-edit-sub]');
+  if (delEditSub) {
+    syncEditorDraftFromDom();
+    const si = parseInt(delEditSub.getAttribute('data-del-edit-sub'), 10);
+    editingSubjectsDraft.splice(si, 1);
+    expandedEditSubIdx = null;
+    renderAdminAddSyllabus();
+    showToast('Subject removed (click Save Changes to apply)');
+    return;
+  }
+
+  const addEditUnit = e.target.closest('[data-add-edit-unit]');
+  if (addEditUnit) {
+    syncEditorDraftFromDom();
+    const si = parseInt(addEditUnit.getAttribute('data-add-edit-unit'), 10);
+    const sub = editingSubjectsDraft[si];
+    if (sub) {
+      sub.units = sub.units || [];
+      sub.units.push({ id: `${sub.id}_u${Date.now().toString(36)}`, title: 'New Unit', groups: [{ name: 'Chapter 1', topics: ['Topic 1'] }] });
+      renderAdminAddSyllabus();
+    }
+    return;
+  }
+
+  const delEditUnit = e.target.closest('[data-del-edit-unit]');
+  if (delEditUnit) {
+    syncEditorDraftFromDom();
+    const [si, ui] = delEditUnit.getAttribute('data-del-edit-unit').split(':').map(Number);
+    if (editingSubjectsDraft[si]?.units) {
+      editingSubjectsDraft[si].units.splice(ui, 1);
+      renderAdminAddSyllabus();
+    }
+    return;
+  }
+
+  const addEditGroup = e.target.closest('[data-add-edit-group]');
+  if (addEditGroup) {
+    syncEditorDraftFromDom();
+    const [si, ui] = addEditGroup.getAttribute('data-add-edit-group').split(':').map(Number);
+    if (editingSubjectsDraft[si]?.units?.[ui]) {
+      editingSubjectsDraft[si].units[ui].groups.push({ name: 'New Chapter', topics: ['Topic 1'] });
+      renderAdminAddSyllabus();
+    }
+    return;
+  }
+
+  const delEditGroup = e.target.closest('[data-del-edit-group]');
+  if (delEditGroup) {
+    syncEditorDraftFromDom();
+    const [si, ui, gi] = delEditGroup.getAttribute('data-del-edit-group').split(':').map(Number);
+    if (editingSubjectsDraft[si]?.units?.[ui]?.groups) {
+      editingSubjectsDraft[si].units[ui].groups.splice(gi, 1);
+      renderAdminAddSyllabus();
+    }
+    return;
+  }
+
   const editBtn = e.target.closest('[data-edit-course]');
   if (editBtn && canAdminAddSyllabus(currentUser)) {
     const cId = editBtn.getAttribute('data-edit-course');
@@ -4084,9 +4293,9 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
         courseName: cObj.fullName || cObj.name,
         yearLabel: yObj.label
       };
-      pendingParsedSubjects = yObj.subjects || [];
+      editingSubjectsDraft = JSON.parse(JSON.stringify(yObj.subjects || []));
+      expandedEditSubIdx = null;
       renderAdminAddSyllabus();
-      showToast('Loaded for editing — re-upload PDF or publish/save');
     }
     return;
   }
@@ -4148,13 +4357,16 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
             showToast('Course deleted');
           });
         } else {
-          fbDb.collection('courses').doc(cId).set({ years: remaining }, { merge: true }).then(() => {
+          fbDb.collection('courses').doc(cId).update({
+            [`years.${yId}`]: firebase.firestore.FieldValue.delete()
+          }).then(() => {
             COURSES[cId].years = remaining;
+            if (previewDraftState && previewDraftState.yearId === yId) previewDraftState = null;
             updateYearUI();
             render();
             renderAdminAddSyllabus();
-            showToast('Year deleted');
-          });
+            showToast('Year deleted permanently!');
+          }).catch((err) => showToast(err.message || 'Delete failed'));
         }
       }
     );
