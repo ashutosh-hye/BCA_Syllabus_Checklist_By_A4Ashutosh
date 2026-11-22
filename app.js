@@ -2569,7 +2569,7 @@ function updateAdminModeTabs() {
     if (descEl) descEl.textContent = 'Viewing shared student progress.';
   } else {
     if (tabsEl) tabsEl.classList.remove('hidden');
-    if (descEl) descEl.textContent = 'Track student progress or browse all listed syllabi.';
+    if (descEl) descEl.textContent = 'Track student progress or browse all listed syllabus.';
   }
   document.querySelectorAll('[data-admin-mode]').forEach((btn) => {
     btn.classList.toggle('active', btn.getAttribute('data-admin-mode') === adminDashboardMode);
@@ -2946,6 +2946,40 @@ function analyzeMatchesForScan(subs, meta, forcedCourse, forcedYear) {
   }
 
   return { matchedCourse, matchedYear, subjectMatches };
+}
+
+function renderVisualPreviewHtml(subjects) {
+  if (!subjects || !subjects.length) return '';
+  return subjects
+    .map((sub) => {
+      const unitsHtml = (sub.units || [])
+        .map((u) => {
+          const chapsHtml = (u.groups || [])
+            .map(
+              (g) => `
+              <div style="margin-top:0.25rem;padding-left:0.5rem;">
+                <div style="font-size:0.76rem;font-weight:700;color:#4f46e5;">${escapeHtml(g.name)} (${(g.topics || []).length})</div>
+                <div style="font-size:0.74rem;color:#64748b;">${(g.topics || []).slice(0, 4).map(escapeHtml).join(' • ')}${(g.topics || []).length > 4 ? ' ...' : ''}</div>
+              </div>
+            `
+            )
+            .join('');
+          return `
+            <div style="margin-top:0.35rem;padding-top:0.35rem;border-top:1px dashed #cbd5e1;">
+              <div style="font-size:0.8rem;font-weight:700;">${escapeHtml(u.title)}</div>
+              ${chapsHtml}
+            </div>
+          `;
+        })
+        .join('');
+      return `
+        <div class="admin-user-card" style="margin-top:0.5rem;">
+          <div style="font-weight:700;font-size:0.9rem;">${escapeHtml(sub.name)} <span class="pill-code">${escapeHtml(sub.code || '')}</span></div>
+          ${unitsHtml}
+        </div>
+      `;
+    })
+    .join('');
 }
 
 function renderYearEditorHtml() {
