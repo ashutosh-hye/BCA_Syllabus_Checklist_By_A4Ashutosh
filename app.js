@@ -3246,7 +3246,13 @@ function renderAdminAddSyllabus() {
   }
 }
 
+let adminLoadSeq = 0;
+
 function loadAdminDashboard() {
+  adminLoadSeq++;
+  const mySeq = adminLoadSeq;
+  const container = document.getElementById('admin-year-containers');
+  if (container) container.innerHTML = '';
   updateAdminModeTabs();
   if (adminDashboardMode === 'syllabus') {
     renderAdminAllSyllabus();
@@ -3256,7 +3262,6 @@ function loadAdminDashboard() {
     renderAdminAddSyllabus();
     return;
   }
-  const container = document.getElementById('admin-year-containers');
   if (!isAdminUser(currentUser) || !fbDb) {
     container.innerHTML = '<p class="sync-error">Access denied.</p>';
     return;
@@ -3269,7 +3274,7 @@ function loadAdminDashboard() {
       : fbDb.collection('users').where('email', 'in', scope).get();
   queryPromise
     .then((snap) => {
-      if (adminDashboardMode !== 'students') return;
+      if (mySeq !== adminLoadSeq || adminDashboardMode !== 'students') return;
       adminUsersCache = [];
       adminDetailState = null;
       const grouped = {};
