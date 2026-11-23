@@ -2228,6 +2228,177 @@ function getYearStatsFor(courseId, yearId) {
   };
 }
 
+
+function showRankCongratsModal(rank, pct, semLabel) {
+  const iconEl = document.getElementById('congrats-icon');
+  const titleEl = document.getElementById('congrats-title');
+  const descEl = document.getElementById('congrats-desc');
+  const modal = document.getElementById('rank-congrats-modal');
+  if (!modal || !iconEl || !titleEl || !descEl) return;
+
+  const badge = rank === 1 ? '🏆' : rank === 2 ? '🥈' : '🥉';
+  const rankWord = rank === 1 ? '1st Place' : rank === 2 ? '2nd Place' : '3rd Place';
+  iconEl.textContent = badge;
+  titleEl.textContent = `Congratulations! ${rankWord}!`;
+  descEl.innerHTML = `You've achieved <strong>${rankWord}</strong> in <strong>${escapeHtml(semLabel)}</strong> with <strong>${pct}%</strong> syllabus completion. Keep up the great momentum!`;
+  modal.classList.add('open');
+}
+
+function checkTop3Achievement(ranked, yrKey, semLabel) {
+  if (!currentUser || !currentUser.email) return;
+  const myEmail = currentUser.email.toLowerCase();
+  const me = ranked.find((r) => (r.user.email || '').toLowerCase() === myEmail);
+  if (!me || me.rank > 3 || me.pct <= 0) return;
+
+  const storageKey = `lb_celebrated_rank_${yrKey}`;
+  let prevRank = 999;
+  try {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) prevRank = parseInt(saved, 10) || 999;
+  } catch (e) {}
+
+  if (me.rank < prevRank) {
+    try { localStorage.setItem(storageKey, String(me.rank)); } catch (e) {}
+    showRankCongratsModal(me.rank, me.pct, semLabel);
+  }
+}
+
+function fetchClassLeaderboard(yrKey) {
+  return fbDb.collection('users').get().then((snap) => {
+    const list = [];
+    snap.forEach((doc) => {
+      const d = doc.data();
+      const norm = normalizeCourseYear(d.selectedCourse, d.selectedYear);
+      if (norm.year !== yrKey) return;
+      const st = getStudentStatsForYear(d, yrKey);
+      let topSubName = '';
+      let topSubPct = 0;
+      if (st.subjectsObj) {
+        Object.entries(st.subjectsObj).forEach(([sName, sPct]) => {
+          if (sPct > topSubPct) {
+            topSubPct = sPct;
+            topSubName = sName;
+          }
+        });
+      }
+      list.push({ user: d, pct: st.pct, done: st.done, total: st.total, topSubName, topSubPct });
+    });
+    list.sort((a, b) => b.pct - a.pct || b.done - a.done);
+    list.forEach((item, idx) => {
+      item.rank = idx + 1;
+    });
+    return list;
+  });
+}
+
+let selectedLeaderboardYear = null;
+
+function populateLeaderboardClassSelect(activeYrId) {
+  const wrap = document.getElementById('lb-class-selector-wrap');
+  const sel = document.getElementById('lb-class-select');
+  if (!wrap || !sel) return;
+  if (!canAdminAddSyllabus(currentUser)) {
+    wrap.classList.add('hidden');
+    return;
+  }
+  wrap.classList.remove('hidden');
+  const opts = [];
+  Object.values(getVisibleCourses()).forEach((cObj) => {
+    Object.values(cObj.years || {}).forEach((yObj) => {
+      opts.push(`<option value="${escapeHtml(cObj.id)}::${escapeHtml(yObj.id)}">${escapeHtml(yObj.semLabel)}</option>`);
+    });
+  });
+  sel.innerHTML = opts.join('');
+  if (selectedLeaderboardYear) {
+    sel.value = selectedLeaderboardYear;
+  } else {
+    const curC = getCurrentCourseConfig();
+    sel.value = `${curC.id}::${activeYrId}`;
+    selectedLeaderboardYear = sel.value;
+  }
+}
+
+function loadLeaderboard(checkCongrats) {
+  const listEl = document.getElementById('lb-list');
+  const subEl = document.getElementById('lb-subtitle');
+  let cfg = getCurrentYearConfig();
+
+  if (canAdminAddSyllabus(currentUser)) {
+    populateLeaderboardClassSelect(cfg.id);
+    if (selectedLeaderboardYear && selectedLeaderboardYear.includes('::')) {
+      const [cId, yId] = selectedLeaderboardYear.split('::');
+      const cObj = COURSES[cId];
+      if (cObj && cObj.years[yId]) cfg = cObj.years[yId];
+    }
+  } else {
+    const wrap = document.getElementById('lb-class-selector-wrap');
+    if (wrap) wrap.classList.add('hidden');
+  }
+
+  if (subEl) subEl.textContent = `${cfg.semLabel} — Ranked by overall completion %`;
+  if (!listEl) return;
+
+  if (!fbDb) {
+    listEl.innerHTML = '<p class="sync-error">Leaderboard requires internet connection.</p>';
+    return;
+  }
+  if (!currentUser) {
+    listEl.innerHTML = '<p class="unit-sub">Sign in with Google to view your class leaderboard and rank.</p>';
+    return;
+  }
+
+  listEl.innerHTML = '<p class="unit-sub">Loading class leaderboard...</p>';
+  fetchClassLeaderboard(cfg.id)
+    .then((ranked) => {
+      if (!ranked.length) {
+        listEl.innerHTML = '<p class="unit-sub">No students in this class yet.</p>';
+        return;
+      }
+      const myEmail = (currentUser.email || '').toLowerCase();
+      listEl.innerHTML = ranked
+        .map((item) => {
+          const u = item.user;
+          const isMe = (u.email || '').toLowerCase() === myEmail;
+          const rankClass = item.rank <= 3 ? `lb-rank-${item.rank}` : '';
+          const rankBadge = item.rank === 1 ? '🏆' : item.rank === 2 ? '🥈' : item.rank === 3 ? '🥉' : `#${item.rank}`;
+          const name = escapeHtml(u.displayName || (u.email ? u.email.split('@')[0] : 'Student'));
+          const initial = name.trim().charAt(0).toUpperCase();
+          const avatarHtml = u.photoURL
+            ? `<img src="${escapeHtml(u.photoURL)}" class="avatar-img" alt="" />`
+            : `<span class="avatar-fallback">${escapeHtml(initial)}</span>`;
+          const topSubHtml = item.topSubName
+            ? `<span class="admin-sub-pill" style="margin-top:0.2rem;display:inline-block;">Top: <strong>${escapeHtml(item.topSubName)} (${item.topSubPct}%)</strong></span>`
+            : `<span class="unit-sub">Just getting started</span>`;
+          return `
+            <div class="lb-row ${rankClass} ${isMe ? 'lb-me' : ''}">
+              <div style="display:flex;align-items:center;gap:0.65rem;min-width:0;">
+                <span class="lb-rank-badge">${rankBadge}</span>
+                ${avatarHtml}
+                <div style="min-width:0;">
+                  <div style="font-weight:700;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    ${name}${isMe ? '<span class="lb-you-pill">You</span>' : ''}
+                  </div>
+                  <div class="unit-sub">${item.done}/${item.total} topics • ${topSubHtml}</div>
+                </div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div style="font-weight:800;font-size:1.08rem;color:#4f46e5;">${item.pct}%</div>
+                <div style="font-size:0.68rem;color:#64748b;">Overall</div>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+
+      if (checkCongrats && cfg.id === getCurrentYearConfig().id) {
+        checkTop3Achievement(ranked, cfg.id, cfg.semLabel);
+      }
+    })
+    .catch((err) => {
+      listEl.innerHTML = `<p class="sync-error">Could not load leaderboard: ${escapeHtml(err.message || 'Check Firestore read rules')}</p>`;
+    });
+}
+
 function pushToCloud() {
   if (!currentUser || !fbDb) return;
   const activeStats = getYearStatsFor(selectedCourse, selectedYear);
@@ -2265,6 +2436,12 @@ function pushToCloud() {
     .collection('users')
     .doc(currentUser.uid)
     .set(payload)
+    .then(() => {
+      const cfg = getCurrentYearConfig();
+      fetchClassLeaderboard(cfg.id)
+        .then((ranked) => checkTop3Achievement(ranked, cfg.id, cfg.semLabel))
+        .catch(() => {});
+    })
     .catch(() => {});
 }
 
@@ -2569,7 +2746,7 @@ function updateAdminModeTabs() {
     if (descEl) descEl.textContent = 'Viewing shared student progress.';
   } else {
     if (tabsEl) tabsEl.classList.remove('hidden');
-    if (descEl) descEl.textContent = 'Track student progress or browse all listed syllabi.';
+    if (descEl) descEl.textContent = 'Track student progress or browse all listed syllabus.';
   }
   document.querySelectorAll('[data-admin-mode]').forEach((btn) => {
     btn.classList.toggle('active', btn.getAttribute('data-admin-mode') === adminDashboardMode);
@@ -2870,16 +3047,17 @@ function collectSubjectTopicsSet(sub) {
   return set;
 }
 
-function analyzeMatchesForScan(subs, meta) {
-  let matchedCourse = null;
-  let matchedYear = null;
-  if (meta && meta.courseName) {
+function analyzeMatchesForScan(subs, meta, forcedCourse, forcedYear) {
+  let matchedCourse = forcedCourse || null;
+  let matchedYear = forcedYear || null;
+
+  if (!matchedCourse && meta && meta.courseName) {
     const cn = normalizeTextKey(meta.courseName);
     matchedCourse = Object.values(COURSES).find(
       (c) => normalizeTextKey(c.name) === cn || normalizeTextKey(c.fullName) === cn
     ) || null;
   }
-  if (matchedCourse && meta && meta.yearLabel) {
+  if (matchedCourse && !matchedYear && meta && meta.yearLabel) {
     const yl = normalizeTextKey(meta.yearLabel);
     matchedYear = Object.values(matchedCourse.years || {}).find(
       (y) => normalizeTextKey(y.label) === yl || yl.includes(normalizeTextKey(y.shortLabel))
@@ -2887,87 +3065,65 @@ function analyzeMatchesForScan(subs, meta) {
   }
 
   const subjectMatches = [];
-  if (matchedYear && Array.isArray(subs)) {
-    subs.forEach((newSub, idx) => {
-      const nName = normalizeTextKey(newSub.name).replace(/^\d+\s+/, '');
-      const nShort = normalizeTextKey(newSub.shortName);
-      const existingSub = (matchedYear.subjects || []).find((es) => {
-        const eName = normalizeTextKey(es.name).replace(/^\d+\s+/, '');
-        const eShort = normalizeTextKey(es.shortName);
-        return (nName && (eName === nName || eName.includes(nName) || nName.includes(eName))) || (nShort && eShort === nShort);
+  const compareSubjectInYear = (newSub, idx, cObj, yObj) => {
+    const nName = normalizeTextKey(newSub.name).replace(/^\d+\s+/, '');
+    const nShort = normalizeTextKey(newSub.shortName);
+    const existingSub = (yObj.subjects || []).find((es) => {
+      const eName = normalizeTextKey(es.name).replace(/^\d+\s+/, '');
+      const eShort = normalizeTextKey(es.shortName);
+      return (nName && (eName === nName || eName.includes(nName) || nName.includes(eName))) || (nShort && eShort === nShort);
+    });
+    if (!existingSub) return null;
+    const exSet = collectSubjectTopicsSet(existingSub);
+    let sameCount = 0;
+    const newTopics = [];
+    (newSub.units || []).forEach((u) => {
+      (u.groups || []).forEach((g) => {
+        (g.topics || []).forEach((t) => {
+          if (exSet.has(normalizeTextKey(t))) sameCount++;
+          else newTopics.push(t);
+        });
       });
-      if (existingSub) {
-        const exSet = collectSubjectTopicsSet(existingSub);
-        let sameCount = 0;
-        const newTopics = [];
-        (newSub.units || []).forEach((u) => {
-          (u.groups || []).forEach((g) => {
-            (g.topics || []).forEach((t) => {
-              if (exSet.has(normalizeTextKey(t))) sameCount++;
-              else newTopics.push(t);
-            });
-          });
-        });
-        subjectMatches.push({
-          scannedIdx: idx,
-          scannedName: newSub.name,
-          existingId: existingSub.id,
-          existingName: existingSub.name,
-          sameCount,
-          newTopics
-        });
+    });
+    return {
+      scannedIdx: idx,
+      scannedName: newSub.name,
+      courseId: cObj.id,
+      courseName: cObj.name,
+      yearId: yObj.id,
+      yearLabel: yObj.label,
+      existingId: existingSub.id,
+      existingName: existingSub.name,
+      sameCount,
+      newTopics
+    };
+  };
+
+  if (Array.isArray(subs)) {
+    subs.forEach((newSub, idx) => {
+      if (matchedCourse && matchedYear) {
+        const m = compareSubjectInYear(newSub, idx, matchedCourse, matchedYear);
+        if (m) subjectMatches.push(m);
+      } else {
+        // Search across ALL courses and years to find where this subject already exists!
+        for (const cObj of Object.values(COURSES)) {
+          for (const yObj of Object.values(cObj.years || {})) {
+            const m = compareSubjectInYear(newSub, idx, cObj, yObj);
+            if (m) {
+              subjectMatches.push(m);
+              if (!matchedCourse) matchedCourse = cObj;
+              if (!matchedYear) matchedYear = yObj;
+              break;
+            }
+          }
+          if (matchedYear) break;
+        }
       }
     });
   }
 
   return { matchedCourse, matchedYear, subjectMatches };
 }
-
-
-function detectCourseAndYearFromText(rawText) {
-  const sample = rawText.slice(0, 2500);
-  const coursePatterns = [
-    { re: /\b(B\.?\s*Com\.?(?:\s*\(Hons\.?\))?)\b/i, name: 'B.Com' },
-    { re: /\b(B\.?\s*C\.?\s*A\.?)\b/i, name: 'BCA' },
-    { re: /\b(B\.?\s*B\.?\s*A\.?)\b/i, name: 'BBA' },
-    { re: /\b(M\.?\s*C\.?\s*A\.?)\b/i, name: 'MCA' },
-    { re: /\b(M\.?\s*B\.?\s*A\.?)\b/i, name: 'MBA' },
-    { re: /\b(B\.?\s*Tech\.?)\b/i, name: 'B.Tech' },
-    { re: /\b(B\.?\s*Sc\.?)\b/i, name: 'B.Sc' },
-    { re: /\b(B\.?\s*A\.?)\b/i, name: 'B.A.' }
-  ];
-  let courseName = '';
-  for (const p of coursePatterns) {
-    const m = sample.match(p.re);
-    if (m) { courseName = p.name; break; }
-  }
-  if (/delhi university|university of delhi/i.test(sample) && courseName === 'B.Com') {
-    courseName = 'DU B.Com';
-  }
-
-  let yearPart = '';
-  const yrMatch = sample.match(/\b(1st|2nd|3rd|4th|First|Second|Third|Fourth)\s+Year\b/i);
-  if (yrMatch) {
-    const map = { first: '1st', second: '2nd', third: '3rd', fourth: '4th' };
-    const normYr = map[yrMatch[1].toLowerCase()] || yrMatch[1];
-    yearPart = `${normYr} Year`;
-  }
-
-  let semPart = '';
-  const semMatch = sample.match(/\b(?:Semester|Sem\.?)\s*[-:]?\s*(I{1,3}V?|V?I{0,3}|[1-8])\b/i)
-    || sample.match(/\b(1st|2nd|3rd|4th|5th|6th|7th|8th)\s+Semester\b/i);
-  if (semMatch) {
-    semPart = `Semester ${semMatch[1].toUpperCase()}`;
-  }
-
-  let yearLabel = '';
-  if (yearPart && semPart) yearLabel = `${yearPart} (${semPart})`;
-  else if (yearPart) yearLabel = yearPart;
-  else if (semPart) yearLabel = semPart;
-
-  return { courseName, yearLabel };
-}
-
 
 function renderVisualPreviewHtml(subjects) {
   if (!subjects || !subjects.length) return '';
@@ -3284,12 +3440,30 @@ function renderAdminAddSyllabus() {
   const newFields = document.getElementById('add-new-course-fields');
   if (sel && newFields) {
     sel.addEventListener('change', () => {
-      newFields.classList.toggle('hidden', sel.value !== '__new__');
+      const val = sel.value;
+      newFields.classList.toggle('hidden', val !== '__new__');
+      if (val && val !== '__new__' && val.includes('::') && pendingParsedSubjects) {
+        const [cId, yId] = val.split('::');
+        const cObj = COURSES[cId];
+        const yObj = cObj && cObj.years[yId];
+        if (cObj && yObj) {
+          pendingMatchReport = analyzeMatchesForScan(pendingParsedSubjects, pendingDetectedMeta, cObj, yObj);
+          renderAdminAddSyllabus();
+          const newSel = document.getElementById('add-target-select');
+          if (newSel) newSel.value = val;
+        }
+      }
     });
   }
 }
 
+let adminLoadSeq = 0;
+
 function loadAdminDashboard() {
+  adminLoadSeq++;
+  const mySeq = adminLoadSeq;
+  const container = document.getElementById('admin-year-containers');
+  if (container) container.innerHTML = '';
   updateAdminModeTabs();
   if (adminDashboardMode === 'syllabus') {
     renderAdminAllSyllabus();
@@ -3299,7 +3473,6 @@ function loadAdminDashboard() {
     renderAdminAddSyllabus();
     return;
   }
-  const container = document.getElementById('admin-year-containers');
   if (!isAdminUser(currentUser) || !fbDb) {
     container.innerHTML = '<p class="sync-error">Access denied.</p>';
     return;
@@ -3312,6 +3485,7 @@ function loadAdminDashboard() {
       : fbDb.collection('users').where('email', 'in', scope).get();
   queryPromise
     .then((snap) => {
+      if (mySeq !== adminLoadSeq || adminDashboardMode !== 'students') return;
       adminUsersCache = [];
       adminDetailState = null;
       const grouped = {};
@@ -4317,8 +4491,11 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
       .then(({ subs, meta }) => {
         setProg(100, 'Done!');
         pendingParsedSubjects = subs;
-        pendingDetectedMeta = meta;
         pendingMatchReport = analyzeMatchesForScan(subs, meta);
+        pendingDetectedMeta = {
+          courseName: meta.courseName || (pendingMatchReport.matchedCourse ? pendingMatchReport.matchedCourse.name : ''),
+          yearLabel: meta.yearLabel || (pendingMatchReport.matchedYear ? pendingMatchReport.matchedYear.label : '')
+        };
         renderAdminAddSyllabus();
         const newSt = document.getElementById('add-parse-status');
         if (newSt) {
@@ -4762,6 +4939,42 @@ setTimeout(() => {
     openLoginPromptModal();
   }
 }, 10000);
+
+// Class Leaderboard & Rank Congrats Events
+document.getElementById('btn-leaderboard').addEventListener('click', () => {
+  selectedLeaderboardYear = null;
+  document.getElementById('leaderboard-modal').classList.add('open');
+  loadLeaderboard(true);
+});
+
+document.getElementById('lb-class-select').addEventListener('change', (e) => {
+  selectedLeaderboardYear = e.target.value;
+  loadLeaderboard(false);
+});
+
+document.getElementById('btn-lb-refresh').addEventListener('click', () => {
+  loadLeaderboard(true);
+});
+
+document.getElementById('lb-modal-close').addEventListener('click', () => {
+  document.getElementById('leaderboard-modal').classList.remove('open');
+});
+
+document.getElementById('leaderboard-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'leaderboard-modal') {
+    document.getElementById('leaderboard-modal').classList.remove('open');
+  }
+});
+
+document.getElementById('congrats-close').addEventListener('click', () => {
+  document.getElementById('rank-congrats-modal').classList.remove('open');
+});
+
+document.getElementById('rank-congrats-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'rank-congrats-modal') {
+    document.getElementById('rank-congrats-modal').classList.remove('open');
+  }
+});
 
 const THEME_STORAGE_KEY = 'syllabus_theme_v1';
 
