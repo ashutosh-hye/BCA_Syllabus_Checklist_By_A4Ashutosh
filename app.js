@@ -2263,6 +2263,27 @@ function checkTop3Achievement(ranked, yrKey, semLabel) {
   }
 }
 
+
+function getCompactSubjectLabel(name) {
+  const map = {
+    'JAVA & Web Design': 'JAVA',
+    'Operating System': 'OS',
+    'Numerical Methods': 'NM',
+    'Human Values & EVS': 'HV & EVS',
+    'Problem Solving (C)': 'C Prog',
+    'Computer Architecture': 'CSA',
+    'Ancient Indian Sci & Tech': 'History',
+    'Foundation of Math': 'Math',
+    'Business Org & Management': 'BOM',
+    'Business Org & Mgmt': 'BOM',
+    'Business Laws': 'Law',
+    'Financial Accounting': 'FA',
+    'Environmental Studies': 'EVS'
+  };
+  if (map[name]) return map[name];
+  return name.length > 14 ? name.slice(0, 12).trim() + '..' : name;
+}
+
 function fetchClassLeaderboard(yrKey) {
   return fbDb.collection('users').get().then((snap) => {
     const list = [];
@@ -2271,17 +2292,27 @@ function fetchClassLeaderboard(yrKey) {
       const norm = normalizeCourseYear(d.selectedCourse, d.selectedYear);
       if (norm.year !== yrKey) return;
       const st = getStudentStatsForYear(d, yrKey);
-      let topSubName = '';
-      let topSubPct = 0;
+      const completedSubs = [];
+      const inProgressSubs = [];
       if (st.subjectsObj) {
         Object.entries(st.subjectsObj).forEach(([sName, sPct]) => {
-          if (sPct > topSubPct) {
-            topSubPct = sPct;
-            topSubName = sName;
+          const label = getCompactSubjectLabel(sName);
+          if (sPct >= 100) {
+            completedSubs.push(label);
+          } else if (sPct > 0) {
+            inProgressSubs.push({ label, pct: sPct });
           }
         });
       }
-      list.push({ user: d, pct: st.pct, done: st.done, total: st.total, topSubName, topSubPct });
+      inProgressSubs.sort((x, y) => y.pct - x.pct);
+      list.push({
+        user: d,
+        pct: st.pct,
+        done: st.done,
+        total: st.total,
+        completedSubs,
+        top3Progress: inProgressSubs.slice(0, 3)
+      });
     });
     list.sort((a, b) => b.pct - a.pct || b.done - a.done);
     list.forEach((item, idx) => {
@@ -2366,9 +2397,15 @@ function loadLeaderboard(checkCongrats) {
           const avatarHtml = u.photoURL
             ? `<img src="${escapeHtml(u.photoURL)}" class="avatar-img" alt="" />`
             : `<span class="avatar-fallback">${escapeHtml(initial)}</span>`;
-          const topSubHtml = item.topSubName
-            ? `<span class="admin-sub-pill" style="margin-top:0.2rem;display:inline-block;">Top: <strong>${escapeHtml(item.topSubName)} (${item.topSubPct}%)</strong></span>`
-            : `<span class="unit-sub">Just getting started</span>`;
+          const doneBox = item.completedSubs && item.completedSubs.length
+            ? `<span class="lb-done-pill">✓ 100%: ${escapeHtml(item.completedSubs.join(', '))}</span>`
+            : '';
+          const progPills = item.top3Progress && item.top3Progress.length
+            ? item.top3Progress.map((p) => `<span class="lb-prog-pill">${escapeHtml(p.label)} <strong>${p.pct}%</strong></span>`).join('')
+            : '';
+          const pillsSection = (doneBox || progPills)
+            ? `<div class="lb-pills-wrap">${doneBox}${progPills}</div>`
+            : `<div class="unit-sub" style="margin-top:0.15rem;">Just getting started</div>`;
           return `
             <div class="lb-row ${rankClass} ${isMe ? 'lb-me' : ''}">
               <div style="display:flex;align-items:center;gap:0.65rem;min-width:0;">
@@ -2378,7 +2415,8 @@ function loadLeaderboard(checkCongrats) {
                   <div style="font-weight:700;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                     ${name}${isMe ? '<span class="lb-you-pill">You</span>' : ''}
                   </div>
-                  <div class="unit-sub">${item.done}/${item.total} topics • ${topSubHtml}</div>
+                  <div class="unit-sub">${item.done}/${item.total} topics</div>
+                  ${pillsSection}
                 </div>
               </div>
               <div style="text-align:right;flex-shrink:0;">
