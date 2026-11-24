@@ -2299,6 +2299,26 @@ function checkTop3Achievement(ranked, yrKey, semLabel) {
   }
 }
 
+function getCompactSubjectLabel(name) {
+  const map = {
+    'JAVA & Web Design': 'JAVA',
+    'Operating System': 'OS',
+    'Numerical Methods': 'NM',
+    'Human Values & EVS': 'HV & EVS',
+    'Problem Solving (C)': 'C Prog',
+    'Computer Architecture': 'CSA',
+    'Ancient Indian Sci & Tech': 'History',
+    'Foundation of Math': 'Math',
+    'Business Org & Management': 'BOM',
+    'Business Org & Mgmt': 'BOM',
+    'Business Laws': 'Law',
+    'Financial Accounting': 'FA',
+    'Environmental Studies': 'EVS'
+  };
+  if (map[name]) return map[name];
+  return name.length > 14 ? name.slice(0, 12).trim() + '..' : name;
+}
+
 function fetchClassLeaderboard(yrKey) {
   return fbDb.collection('users').get().then((snap) => {
     const list = [];
