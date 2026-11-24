@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <style>
+    .stroke-main { stroke: #1e293b; }
+    .stroke-accent { stroke: #4f46e5; }
+    @media (prefers-color-scheme: dark) {
+      .stroke-main { stroke: #ffffff; }
+      .stroke-accent { stroke: #ffffff; }
+    }
+  </style>
+  <!-- Rounded checklist frame -->
+  <rect class="stroke-main" x="10" y="8" width="44" height="48" rx="10" stroke-width="5.5" />
+  <!-- Top checkmark + line -->
+  <path class="stroke-accent" d="M19 23 L24 28 L33 19" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+  <line class="stroke-main" x1="39" y1="24" x2="46" y2="24" stroke-width="5" stroke-linecap="round" />
+  <!-- Bottom checkmark + line -->
+  <path class="stroke-accent" d="M19 39 L24 44 L33 35" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+  <line class="stroke-main" x1="39" y1="40" x2="46" y2="40" stroke-width="5" stroke-linecap="round" />
+</svg>
