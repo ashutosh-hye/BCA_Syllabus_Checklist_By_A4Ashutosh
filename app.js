@@ -2229,10 +2229,13 @@ function getYearStatsFor(courseId, yearId) {
 }
 
 
+let initialRankCheckDone = false;
+
 function showRankCongratsModal(rank, pct, semLabel) {
   const iconEl = document.getElementById('congrats-icon');
   const titleEl = document.getElementById('congrats-title');
   const descEl = document.getElementById('congrats-desc');
+  const btnEl = document.getElementById('congrats-close');
   const modal = document.getElementById('rank-congrats-modal');
   if (!modal || !iconEl || !titleEl || !descEl) return;
 
@@ -2241,6 +2244,22 @@ function showRankCongratsModal(rank, pct, semLabel) {
   iconEl.textContent = badge;
   titleEl.textContent = `Congratulations! ${rankWord}!`;
   descEl.innerHTML = `You've achieved <strong>${rankWord}</strong> in <strong>${escapeHtml(semLabel)}</strong> with <strong>${pct}%</strong> syllabus completion. Keep up the great momentum!`;
+  if (btnEl) btnEl.textContent = 'Keep Going!';
+  modal.classList.add('open');
+}
+
+function showRankDroppedModal(prevRank, newRank, pct, semLabel) {
+  const iconEl = document.getElementById('congrats-icon');
+  const titleEl = document.getElementById('congrats-title');
+  const descEl = document.getElementById('congrats-desc');
+  const btnEl = document.getElementById('congrats-close');
+  const modal = document.getElementById('rank-congrats-modal');
+  if (!modal || !iconEl || !titleEl || !descEl) return;
+
+  iconEl.textContent = '😔';
+  titleEl.textContent = 'Your Rank Dropped!';
+  descEl.innerHTML = `You slipped from <strong>#${prevRank}</strong> down to <strong>#${newRank}</strong> in <strong>${escapeHtml(semLabel)}</strong> (${pct}%). Others are moving ahead — time to start studying and reclaim your spot!`;
+  if (btnEl) btnEl.textContent = "Let's Study!";
   modal.classList.add('open');
 }
 
@@ -2248,40 +2267,36 @@ function checkTop3Achievement(ranked, yrKey, semLabel) {
   if (!currentUser || !currentUser.email) return;
   const myEmail = currentUser.email.toLowerCase();
   const me = ranked.find((r) => (r.user.email || '').toLowerCase() === myEmail);
-  if (!me || me.rank > 3 || me.pct <= 0) return;
+  if (!me) return;
 
-  const storageKey = `lb_celebrated_rank_${yrKey}`;
-  let prevRank = 999;
+  const storageKey = `lb_last_rank_${yrKey}`;
+  const legacyKey = `lb_celebrated_rank_${yrKey}`;
+  let prevRank = null;
   try {
-    const saved = localStorage.getItem(storageKey);
-    if (saved) prevRank = parseInt(saved, 10) || 999;
+    const saved = localStorage.getItem(storageKey) || localStorage.getItem(legacyKey);
+    if (saved) prevRank = parseInt(saved, 10) || null;
   } catch (e) {}
 
-  if (me.rank < prevRank) {
+  if (prevRank === null) {
+    // First time seeing rank on this device: save baseline; celebrate only if already in Top 3 with >0%
     try { localStorage.setItem(storageKey, String(me.rank)); } catch (e) {}
-    showRankCongratsModal(me.rank, me.pct, semLabel);
+    if (me.rank <= 3 && me.pct > 0) {
+      showRankCongratsModal(me.rank, me.pct, semLabel);
+    }
+    return;
   }
-}
 
-
-function getCompactSubjectLabel(name) {
-  const map = {
-    'JAVA & Web Design': 'JAVA',
-    'Operating System': 'OS',
-    'Numerical Methods': 'NM',
-    'Human Values & EVS': 'HV & EVS',
-    'Problem Solving (C)': 'C Prog',
-    'Computer Architecture': 'CSA',
-    'Ancient Indian Sci & Tech': 'History',
-    'Foundation of Math': 'Math',
-    'Business Org & Management': 'BOM',
-    'Business Org & Mgmt': 'BOM',
-    'Business Laws': 'Law',
-    'Financial Accounting': 'FA',
-    'Environmental Studies': 'EVS'
-  };
-  if (map[name]) return map[name];
-  return name.length > 14 ? name.slice(0, 12).trim() + '..' : name;
+  if (me.rank > prevRank) {
+    // Rank dropped!
+    try { localStorage.setItem(storageKey, String(me.rank)); } catch (e) {}
+    showRankDroppedModal(prevRank, me.rank, me.pct, semLabel);
+  } else if (me.rank < prevRank) {
+    // Rank improved!
+    try { localStorage.setItem(storageKey, String(me.rank)); } catch (e) {}
+    if (me.rank <= 3 && me.pct > 0) {
+      showRankCongratsModal(me.rank, me.pct, semLabel);
+    }
+  }
 }
 
 function fetchClassLeaderboard(yrKey) {
@@ -2535,6 +2550,13 @@ function startCloudListener(user) {
             saveState(true);
           }
           render();
+          if (!initialRankCheckDone) {
+            initialRankCheckDone = true;
+            const cfg = getCurrentYearConfig();
+            fetchClassLeaderboard(cfg.id)
+              .then((ranked) => checkTop3Achievement(ranked, cfg.id, cfg.semLabel))
+              .catch(() => {});
+          }
         } else {
           guestTickCount = 0;
           pushToCloud();
@@ -2589,6 +2611,7 @@ function initFirebase() {
     fbAuth.getRedirectResult().catch(() => {});
     fbAuth.onAuthStateChanged((user) => {
       currentUser = user || null;
+      if (!currentUser) initialRankCheckDone = false;
       updateAuthUI();
       if (currentUser) {
         startCloudListener(currentUser);
