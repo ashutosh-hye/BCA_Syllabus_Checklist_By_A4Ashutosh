@@ -1,7 +1,7 @@
 const ADMIN_ACCESS = {
   'ashutoshaamonty@gmail.com': { scope: '*', canViewAllSyllabus: true, canAddSyllabus: true },
   'tideseren@gmail.com': { scope: '*', canViewAllSyllabus: true, canAddSyllabus: false },
-  'ankitayo2005@gmail.com': { scope: ['ashutoshaamonty@gmail.com'], canViewAllSyllabus: false, canAddSyllabus: false }
+  'ankitayo2005@gmail.com': { scope: ['ashutoshaamonty@gmail.com', 'gitikad833@gmail.com'], canViewAllSyllabus: false, canAddSyllabus: false }
 };
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCjK6hvr-faQTcV5mRA1QTkZw8LoZyO2bU",
