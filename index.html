@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" href="logo.png" />
   <link rel="apple-touch-icon" href="logo.png" />
 
-  <link rel="stylesheet" href="style.css?v=36" />
+  <link rel="stylesheet" href="style.css?v=37" />
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-firestore-compat.js"></script>
@@ -244,7 +244,10 @@
       </div>
       <div id="lb-class-selector-wrap" class="hidden" style="margin-top:0.75rem;">
         <label class="add-syl-label">Select Class Leaderboard (Admin):</label>
-        <select id="lb-class-select" class="add-syl-input"></select>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+          <select id="lb-class-select" class="add-syl-input" style="flex:1;min-width:180px;"></select>
+          <button id="btn-lb-toggle-class" type="button" class="btn btn-outline">Leaderboard: ON</button>
+        </div>
       </div>
       <div id="lb-list" style="margin-top:0.85rem;"></div>
     </div>
@@ -265,6 +268,6 @@
   <!-- Toast -->
   <div id="toast" class="toast"></div>
 
-  <script src="app.js?v=36"></script>
+  <script src="app.js?v=37"></script>
 </body>
 </html>

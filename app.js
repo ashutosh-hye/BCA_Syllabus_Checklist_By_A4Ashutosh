@@ -2093,6 +2093,7 @@ function updateYearUI() {
       .join('');
   }
   renderHeaderYearButtons();
+  updateLeaderboardButtonVisibility();
 }
 
 function setCourseAndYear(course, yr, pushCloud) {
@@ -2264,6 +2265,7 @@ function showRankDroppedModal(prevRank, newRank, pct, semLabel) {
 }
 
 function checkTop3Achievement(ranked, yrKey, semLabel) {
+  if (!isLeaderboardEnabledForYear(yrKey)) return;
   if (!currentUser || !currentUser.email) return;
   const myEmail = currentUser.email.toLowerCase();
   const me = ranked.find((r) => (r.user.email || '').toLowerCase() === myEmail);
@@ -2358,6 +2360,22 @@ function fetchClassLeaderboard(yrKey) {
 }
 
 let selectedLeaderboardYear = null;
+let leaderboardDisabledYears = {};
+
+function isLeaderboardEnabledForYear(yrKey) {
+  return !leaderboardDisabledYears[yrKey];
+}
+
+function updateLeaderboardButtonVisibility() {
+  const lbBtn = document.getElementById('btn-leaderboard');
+  if (!lbBtn) return;
+  if (canAdminAddSyllabus(currentUser)) {
+    lbBtn.classList.remove('hidden');
+    return;
+  }
+  const cfg = getCurrentYearConfig();
+  lbBtn.classList.toggle('hidden', !isLeaderboardEnabledForYear(cfg.id));
+}
 
 function populateLeaderboardClassSelect(activeYrId) {
   const wrap = document.getElementById('lb-class-selector-wrap');
@@ -2401,7 +2419,21 @@ function loadLeaderboard(checkCongrats) {
     if (wrap) wrap.classList.add('hidden');
   }
 
-  if (subEl) subEl.textContent = `${cfg.semLabel} — Ranked by overall completion %`;
+  const isEnabled = isLeaderboardEnabledForYear(cfg.id);
+  const toggleBtn = document.getElementById('btn-lb-toggle-class');
+  if (toggleBtn && canAdminAddSyllabus(currentUser)) {
+    toggleBtn.textContent = isEnabled ? 'Leaderboard: ON' : 'Leaderboard: OFF';
+    toggleBtn.className = isEnabled ? 'btn btn-primary' : 'btn btn-danger-soft';
+  }
+  if (subEl) {
+    subEl.textContent = isEnabled
+      ? `${cfg.semLabel} — Ranked by overall completion %`
+      : `${cfg.semLabel} — Currently OFF for students (visible only to you)`;
+  }
+  if (!isEnabled && !canAdminAddSyllabus(currentUser)) {
+    if (listEl) listEl.innerHTML = '<p class="unit-sub">Leaderboard is currently turned off for this class by Admin.</p>';
+    return;
+  }
   if (!listEl) return;
 
   if (!fbDb) {
@@ -2598,6 +2630,16 @@ function initFirebase() {
     const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG);
     fbAuth = app.auth();
     fbDb = app.firestore();
+    fbDb.collection('admin_config').doc('leaderboard').onSnapshot(
+      (doc) => {
+        leaderboardDisabledYears = (doc.exists && doc.data() && doc.data().disabledYears) || {};
+        updateLeaderboardButtonVisibility();
+        if (document.getElementById('leaderboard-modal')?.classList.contains('open')) {
+          loadLeaderboard(false);
+        }
+      },
+      () => {}
+    );
     fbDb.collection('courses').onSnapshot(
       (snap) => {
         let changed = false;
@@ -2711,6 +2753,57 @@ function renderAdminUserCard(u, yrKey, cacheIdx) {
   `;
 }
 
+
+function computePayloadForStudentMap(u, newCheckedMap) {
+  const norm = normalizeCourseYear(u.selectedCourse, u.selectedYear);
+  const calcYr = (cId, yId) => {
+    const subList = (COURSES[cId]?.years?.[yId]?.subjects) || [];
+    let total = 0, done = 0;
+    const breakdown = {};
+    subList.forEach((sub) => {
+      let sTotal = 0, sDone = 0;
+      (sub.units || []).forEach((unit) => {
+        (unit.groups || []).forEach((g, gi) => {
+          (g.topics || []).forEach((_, ti) => {
+            sTotal++;
+            if (newCheckedMap[getTopicId(unit.id, gi, ti)]) sDone++;
+          });
+        });
+      });
+      total += sTotal;
+      done += sDone;
+      if (!sub.missingNotice) breakdown[sub.shortName] = sTotal ? Math.round((sDone / sTotal) * 100) : 0;
+    });
+    return { total, done, pct: total ? Math.round((done / total) * 100) : 0, breakdown };
+  };
+
+  const active = calcYr(norm.course, norm.year);
+  const y1 = calcYr('bca', 'bca_y1');
+  const y2 = calcYr('bca', 'bca_y2');
+  const bcomY1 = calcYr('bcom', 'bcom_y1');
+
+  return {
+    checkedMap: newCheckedMap,
+    overallPct: active.pct,
+    doneCount: active.done,
+    totalCount: active.total,
+    subjectStats: active.breakdown,
+    year1Pct: y1.pct,
+    year1Done: y1.done,
+    year1Total: y1.total,
+    year1Subjects: y1.breakdown,
+    year2Pct: y2.pct,
+    year2Done: y2.done,
+    year2Total: y2.total,
+    year2Subjects: y2.breakdown,
+    bcomY1Pct: bcomY1.pct,
+    bcomY1Done: bcomY1.done,
+    bcomY1Total: bcomY1.total,
+    bcomY1Subjects: bcomY1.breakdown,
+    updatedAt: new Date().toISOString()
+  };
+}
+
 function renderAdminStudentDetail(idx, filter) {
   const container = document.getElementById('admin-year-containers');
   const entry = adminUsersCache[idx];
@@ -2775,9 +2868,12 @@ function renderAdminStudentDetail(idx, filter) {
     const subPct = subTotal ? Math.round((subDone / subTotal) * 100) : 0;
     subjectsHtml += `
       <div class="admin-detail-sub">
-        <div class="admin-detail-sub-title">
+        <div class="admin-detail-sub-title" style="gap:0.5rem;flex-wrap:wrap;">
           <span>${escapeHtml(sub.name)}</span>
-          <span style="color:#4f46e5;">${subDone}/${subTotal} (${subPct}%)</span>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <span style="color:#4f46e5;">${subDone}/${subTotal} (${subPct}%)</span>
+            ${canAdminAddSyllabus(currentUser) ? `<button type="button" data-admin-reset-sub="${idx}::${escapeHtml(sub.id)}" class="btn btn-danger-soft" style="padding:0.18rem 0.48rem;font-size:0.7rem;">Reset Subject</button>` : ''}
+          </div>
         </div>
         ${unitsHtml || '<div class="admin-detail-unit"><span class="unit-sub">No topics in this filter.</span></div>'}
       </div>
@@ -2806,6 +2902,14 @@ function renderAdminStudentDetail(idx, filter) {
       <div style="text-align:right;">
         <div style="font-weight:700;font-size:1.05rem;color:#4f46e5;">${st.pct}%</div>
         <div style="font-size:0.75rem;color:#64748b;">${st.done}/${st.total} topics done</div>
+        ${
+          canAdminAddSyllabus(currentUser)
+            ? `<div style="display:flex;gap:0.4rem;margin-top:0.45rem;justify-content:flex-end;flex-wrap:wrap;">
+                 <button type="button" data-admin-clear-student="${idx}" class="btn btn-outline" style="padding:0.25rem 0.55rem;font-size:0.72rem;">Clear All Progress</button>
+                 <button type="button" data-admin-remove-student="${idx}" class="btn btn-danger-soft" style="padding:0.25rem 0.55rem;font-size:0.72rem;">Remove Student</button>
+               </div>`
+            : ''
+        }
       </div>
     </div>
     ${subjectsHtml}
@@ -3579,7 +3683,7 @@ function loadAdminDashboard() {
         const d = doc.data();
         const norm = normalizeCourseYear(d.selectedCourse, d.selectedYear);
         const idx = adminUsersCache.length;
-        adminUsersCache.push({ user: d, course: norm.course, yr: norm.year });
+        adminUsersCache.push({ uid: doc.id, user: d, course: norm.course, yr: norm.year });
         if (grouped[norm.course] && grouped[norm.course][norm.year]) {
           grouped[norm.course][norm.year].push({ user: d, idx });
         }
@@ -4417,6 +4521,76 @@ document.getElementById('admin-year-containers').addEventListener('click', (e) =
     return;
   }
 
+  const resetSubBtn = e.target.closest('[data-admin-reset-sub]');
+  if (resetSubBtn && fbDb && canAdminAddSyllabus(currentUser)) {
+    const [idxStr, subId] = resetSubBtn.getAttribute('data-admin-reset-sub').split('::');
+    const idx = parseInt(idxStr, 10);
+    const entry = adminUsersCache[idx];
+    if (!entry || !entry.uid) return;
+    const cfg = COURSES[entry.course]?.years?.[entry.yr];
+    const sub = cfg?.subjects?.find((s) => s.id === subId);
+    if (!sub) return;
+    openModal(
+      `Reset ${sub.shortName}?`,
+      `This will uncheck all topics of ${sub.name} for ${entry.user.displayName || entry.user.email}.`,
+      () => {
+        const nextMap = { ...(entry.user.checkedMap || {}) };
+        (sub.units || []).forEach((u) => {
+          (u.groups || []).forEach((g, gi) => {
+            (g.topics || []).forEach((_, ti) => {
+              delete nextMap[getTopicId(u.id, gi, ti)];
+            });
+          });
+        });
+        const patch = computePayloadForStudentMap(entry.user, nextMap);
+        fbDb.collection('users').doc(entry.uid).set(patch, { merge: true }).then(() => {
+          entry.user = { ...entry.user, ...patch };
+          renderAdminStudentDetail(idx, adminDetailState ? adminDetailState.filter : 'all');
+          showToast(`${sub.shortName} reset for student!`);
+        }).catch((err) => showToast(err.message || 'Reset failed (check Firestore Rules)'));
+      }
+    );
+    return;
+  }
+
+  const clearStuBtn = e.target.closest('[data-admin-clear-student]');
+  if (clearStuBtn && fbDb && canAdminAddSyllabus(currentUser)) {
+    const idx = parseInt(clearStuBtn.getAttribute('data-admin-clear-student'), 10);
+    const entry = adminUsersCache[idx];
+    if (!entry || !entry.uid) return;
+    openModal(
+      'Clear All Student Progress?',
+      `This will reset ALL completed topics to 0% for ${entry.user.displayName || entry.user.email}.`,
+      () => {
+        const patch = computePayloadForStudentMap(entry.user, {});
+        fbDb.collection('users').doc(entry.uid).set(patch, { merge: true }).then(() => {
+          entry.user = { ...entry.user, ...patch };
+          renderAdminStudentDetail(idx, 'all');
+          showToast('Student progress cleared!');
+        }).catch((err) => showToast(err.message || 'Clear failed (check Firestore Rules)'));
+      }
+    );
+    return;
+  }
+
+  const removeStuBtn = e.target.closest('[data-admin-remove-student]');
+  if (removeStuBtn && fbDb && canAdminAddSyllabus(currentUser)) {
+    const idx = parseInt(removeStuBtn.getAttribute('data-admin-remove-student'), 10);
+    const entry = adminUsersCache[idx];
+    if (!entry || !entry.uid) return;
+    openModal(
+      'Remove Student from Website?',
+      `This removes ${entry.user.displayName || entry.user.email} from the leaderboard and student list (they are not blocked and can sign in again anytime).`,
+      () => {
+        fbDb.collection('users').doc(entry.uid).delete().then(() => {
+          loadAdminDashboard();
+          showToast('Student removed!');
+        }).catch((err) => showToast(err.message || 'Remove failed (check Firestore Rules)'));
+      }
+    );
+    return;
+  }
+
   const viewStudent = e.target.closest('[data-admin-view-student]');
   if (viewStudent) {
     const idx = parseInt(viewStudent.getAttribute('data-admin-view-student'), 10);
@@ -5031,6 +5205,25 @@ document.getElementById('btn-leaderboard').addEventListener('click', () => {
 document.getElementById('lb-class-select').addEventListener('change', (e) => {
   selectedLeaderboardYear = e.target.value;
   loadLeaderboard(false);
+});
+
+document.getElementById('btn-lb-toggle-class').addEventListener('click', () => {
+  if (!fbDb || !canAdminAddSyllabus(currentUser)) return;
+  let yrKey = getCurrentYearConfig().id;
+  if (selectedLeaderboardYear && selectedLeaderboardYear.includes('::')) {
+    yrKey = selectedLeaderboardYear.split('::')[1];
+  }
+  const nextDisabled = { ...leaderboardDisabledYears };
+  if (nextDisabled[yrKey]) delete nextDisabled[yrKey];
+  else nextDisabled[yrKey] = true;
+  fbDb.collection('admin_config').doc('leaderboard').set({ disabledYears: nextDisabled, updatedAt: new Date().toISOString() })
+    .then(() => {
+      leaderboardDisabledYears = nextDisabled;
+      updateLeaderboardButtonVisibility();
+      loadLeaderboard(false);
+      showToast(nextDisabled[yrKey] ? 'Leaderboard turned OFF for this class' : 'Leaderboard turned ON for this class');
+    })
+    .catch((err) => showToast(err.message || 'Could not update setting'));
 });
 
 document.getElementById('btn-lb-refresh').addEventListener('click', () => {
